@@ -8,7 +8,13 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\StokController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\XenditWebhookController;
 use Illuminate\Support\Facades\Route;
+
+// Xendit webhook — no auth, no CSRF
+Route::post('/webhook/xendit', [XenditWebhookController::class, 'handle'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('webhook.xendit');
 
 // Auth
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -71,8 +77,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:kasir')->group(function () {
         Route::get('/kasir', [KasirController::class, 'index'])->name('kasir.index');
         Route::post('/kasir/transaksi', [KasirController::class, 'store'])->name('kasir.store');
-        // Kasir can view their own transaction history
         Route::get('/kasir/riwayat', [KasirController::class, 'riwayat'])->name('kasir.riwayat');
+        Route::get('/kasir/payment-status/{transaksi}', [KasirController::class, 'checkPaymentStatus'])->name('kasir.payment-status');
     });
 
     // Struk: kasir (own), admin & owner (any) — access controlled in controller

@@ -10,12 +10,7 @@
         <div class="pos-toolbar-title">Transaksi Penjualan</div>
         <div class="pos-toolbar-sub">Cari barang, scan kode, lalu selesaikan pembayaran tanpa pindah layar.</div>
     </div>
-    <div class="shortcut-strip" aria-label="Shortcut kasir">
-        <span class="shortcut-chip"><kbd>F2</kbd> Cari</span>
-        <span class="shortcut-chip"><kbd>Enter</kbd> Tambah</span>
-        <span class="shortcut-chip"><kbd>F4</kbd> Batal</span>
-        <span class="shortcut-chip"><kbd>F9</kbd> Bayar</span>
-    </div>
+
 </div>
 
 <div class="pos-layout" style="padding:0; margin:-20px -24px; height:calc(100vh - 64px);">
@@ -27,7 +22,7 @@
             <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--color-ink-4);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
             </svg>
-            <input type="text" id="search-produk" placeholder="Cari produk atau kode… [F2]" class="form-input" style="padding-left:34px;" autocomplete="off">
+            <input type="text" id="search-produk" placeholder="Cari produk atau kode…" class="form-input" style="padding-left:34px;" autocomplete="off">
         </div>
 
         <div id="produk-grid" class="pos-product-grid">
@@ -89,7 +84,7 @@
             </div>
             <button onclick="clearCart()"
                     style="font-size:11px;color:var(--color-danger);background:none;border:none;cursor:pointer;padding:4px 0;">
-                Batal [F4]
+                Batal
             </button>
         </div>
 
@@ -145,8 +140,34 @@
 
             <hr style="margin:2px 0;border:none;border-top:1px solid var(--color-border);">
 
-            {{-- Uang Bayar --}}
+            {{-- Metode Bayar --}}
             <div>
+                <p style="font-size:12px;color:var(--color-ink-3);margin-bottom:6px;">Metode Pembayaran</p>
+                <div style="display:flex;border:1px solid var(--color-border);border-radius:8px;overflow:hidden;">
+                    <button id="pm-cash" type="button" onclick="setPaymentMethod('cash')"
+                            class="pos-diskon-mode-btn pos-diskon-mode-btn--active"
+                            style="flex:1;padding:7px 4px;font-size:12px;font-weight:600;cursor:pointer;border:none;
+                                   display:flex;align-items:center;justify-content:center;gap:5px;transition:background 120ms,color 120ms;">
+                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                        </svg>
+                        Cash
+                    </button>
+                    <button id="pm-xendit" type="button" onclick="setPaymentMethod('xendit')"
+                            class="pos-diskon-mode-btn"
+                            style="flex:1;padding:7px 4px;font-size:12px;font-weight:500;cursor:pointer;border:none;
+                                   border-left:1px solid var(--color-border);display:flex;align-items:center;
+                                   justify-content:center;gap:5px;transition:background 120ms,color 120ms;">
+                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01"/>
+                        </svg>
+                        QRIS / Transfer
+                    </button>
+                </div>
+            </div>
+
+            {{-- Uang Bayar (cash only) --}}
+            <div id="cash-section">
                 <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
                     <span style="font-size:12.5px;font-weight:500;color:var(--color-ink-2);">Uang Bayar</span>
                     <span id="sisa-label" style="font-size:11px;color:var(--color-danger);display:none;font-family:var(--font-mono);"></span>
@@ -158,26 +179,34 @@
                               padding:9px 12px;color:var(--color-ink);"
                        oninput="onUangBayarInput(this)" onfocus="selectAll(this)" autocomplete="off"
                        maxlength="14">
+
+                {{-- Quick-pay chips --}}
+                <div id="quick-pay-strip" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;"></div>
+
+                {{-- Kembalian --}}
+                <div id="kembalian-box"
+                     style="display:none;justify-content:space-between;align-items:center;
+                            padding:8px 12px;border-radius:8px;margin-top:6px;
+                            background:var(--color-success-dim);border:1px solid oklch(0.45 0.14 145 / 0.25);">
+                    <span style="font-size:12px;color:var(--color-ink-3);">Kembalian</span>
+                    <span id="display-kembalian"
+                          style="font-size:15px;font-weight:700;font-family:var(--font-mono);color:var(--color-success);"></span>
+                </div>
             </div>
 
-            {{-- Quick-pay chips --}}
-            <div id="quick-pay-strip" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
-
-            {{-- Kembalian — hidden until uang bayar > 0 --}}
-            <div id="kembalian-box"
-                 style="display:none;justify-content:space-between;align-items:center;
-                        padding:8px 12px;border-radius:8px;
-                        background:var(--color-success-dim);border:1px solid oklch(0.45 0.14 145 / 0.25);">
-                <span style="font-size:12px;color:var(--color-ink-3);">Kembalian</span>
-                <span id="display-kembalian"
-                      style="font-size:15px;font-weight:700;font-family:var(--font-mono);color:var(--color-success);"></span>
+            {{-- Xendit info (xendit only) --}}
+            <div id="xendit-section" style="display:none;">
+                <div style="padding:10px 12px;border-radius:8px;background:var(--color-surface-2);
+                            border:1px solid var(--color-border);font-size:12px;color:var(--color-ink-3);line-height:1.5;">
+                    Invoice Xendit akan dibuka di tab baru. Kasir menunggu konfirmasi pembayaran sebelum transaksi selesai.
+                </div>
             </div>
 
             {{-- Proses --}}
             <button id="proses-transaksi" type="button" onclick="prosesTransaksi()"
                     class="btn btn-primary"
                     style="width:100%;justify-content:center;padding:11px;font-size:13.5px;font-weight:600;margin-top:2px;">
-                Proses Bayar [F9]
+                Proses Bayar
             </button>
 
         </div>
@@ -189,10 +218,12 @@
 <script>
 // ── State ───────────────────────────────────────────────────
 const cart = {};
-let _diskonRaw  = 0;
-let _diskonMode = 'nominal';  // 'nominal' | 'persen'
-let _uangBayar  = 0;
-let _uangTouched = false;     // true once user types into uang bayar
+let _diskonRaw    = 0;
+let _diskonMode   = 'nominal';  // 'nominal' | 'persen'
+let _uangBayar    = 0;
+let _uangTouched  = false;
+let _paymentMethod = 'cash';    // 'cash' | 'xendit'
+let _pollInterval  = null;
 
 const MAX_BAYAR = 100_000_000;
 
@@ -214,6 +245,21 @@ function selectAll(el) {
 function escapeHtml(v) {
     return String(v).replace(/[&<>'"]/g,
         c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'})[c]);
+}
+
+// ── Payment method toggle ────────────────────────────────────
+function setPaymentMethod(method) {
+    _paymentMethod = method;
+    const isCash = method === 'cash';
+
+    document.getElementById('cash-section').style.display   = isCash ? '' : 'none';
+    document.getElementById('xendit-section').style.display = isCash ? 'none' : '';
+
+    document.getElementById('pm-cash').classList.toggle('pos-diskon-mode-btn--active', isCash);
+    document.getElementById('pm-xendit').classList.toggle('pos-diskon-mode-btn--active', !isCash);
+
+    const btn = document.getElementById('proses-transaksi');
+    btn.textContent = isCash ? 'Proses Bayar' : 'Buat Invoice Xendit';
 }
 
 // ── Diskon mode toggle ───────────────────────────────────────
@@ -485,17 +531,28 @@ function clearCart() {
 }
 
 function resetPaymentFields() {
-    _diskonRaw   = 0;
-    _uangBayar   = 0;
-    _uangTouched = false;
-    _diskonMode  = 'nominal';
+    _diskonRaw    = 0;
+    _uangBayar    = 0;
+    _uangTouched  = false;
+    _diskonMode   = 'nominal';
+    _paymentMethod = 'cash';
     document.getElementById('diskon-display').value      = '';
     document.getElementById('uang-bayar-display').value  = '';
     document.getElementById('quick-pay-strip').innerHTML = '';
     document.getElementById('kembalian-box').style.display = 'none';
     document.getElementById('sisa-label').style.display    = 'none';
     document.getElementById('potongan-row').style.display  = 'none';
-    setDiskonMode('nominal'); // resets toggle buttons
+    setDiskonMode('nominal');
+    setPaymentMethod('cash');
+}
+
+function resetAndReload() {
+    const ids = Object.keys(cart).map(Number);
+    ids.forEach(k => delete cart[k]);
+    ids.forEach(k => syncCardState(k));
+    resetPaymentFields();
+    renderCart();
+    window.location.reload();
 }
 
 // ── Proses transaksi ─────────────────────────────────────────
@@ -505,25 +562,34 @@ async function prosesTransaksi() {
 
     const t = total();
 
-    if (!_uangTouched || _uangBayar === 0) {
-        document.getElementById('uang-bayar-display').focus();
-        toast('warning', 'Masukkan jumlah uang yang diterima');
-        return;
+    // Cash-only validations
+    if (_paymentMethod === 'cash') {
+        if (!_uangTouched || _uangBayar === 0) {
+            document.getElementById('uang-bayar-display').focus();
+            toast('warning', 'Masukkan jumlah uang yang diterima');
+            return;
+        }
+        if (_uangBayar < t) {
+            toast('error', `Uang bayar kurang Rp\u00a0${(t - _uangBayar).toLocaleString('id-ID')}`);
+            document.getElementById('uang-bayar-display').focus();
+            return;
+        }
     }
-    if (_uangBayar < t) {
-        const kurang = (t - _uangBayar).toLocaleString('id-ID');
-        toast('error', `Uang bayar kurang Rp\u00a0${kurang}`);
-        document.getElementById('uang-bayar-display').focus();
-        return;
-    }
+
+    const confirmHtml = _paymentMethod === 'cash'
+        ? `<div style="font-size:13px;color:var(--color-ink-2);line-height:1.6;">
+               Total &nbsp;<strong style="color:var(--color-ink);">${fmt(t)}</strong><br>
+               Kembali <strong style="color:var(--color-success);">${fmt(_uangBayar - t)}</strong>
+           </div>`
+        : `<div style="font-size:13px;color:var(--color-ink-2);line-height:1.6;">
+               Total &nbsp;<strong style="color:var(--color-ink);">${fmt(t)}</strong><br>
+               Invoice Xendit akan dibuka di tab baru.
+           </div>`;
 
     const conf = await Swal.fire({
         ...window.swalTheme,
         title: 'Proses transaksi?',
-        html: `<div style="font-size:13px;color:var(--color-ink-2);line-height:1.6;">
-            Total &nbsp;<strong style="color:var(--color-ink);">${fmt(t)}</strong><br>
-            Kembali <strong style="color:var(--color-success);">${fmt(_uangBayar - t)}</strong>
-        </div>`,
+        html: confirmHtml,
         icon: 'question', showCancelButton: true,
         confirmButtonText: 'Proses!', cancelButtonText: 'Batal',
     });
@@ -534,6 +600,13 @@ async function prosesTransaksi() {
     Swal.fire({ ...window.swalTheme, title: 'Memproses…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
     try {
+        const payload = {
+            items:          items.map(i => ({ id: i.id, qty: i.qty })),
+            diskon:         diskonNominal(),
+            payment_method: _paymentMethod,
+        };
+        if (_paymentMethod === 'cash') payload.uang_bayar = _uangBayar;
+
         const res = await fetch('{{ route('kasir.store') }}', {
             method: 'POST',
             headers: {
@@ -541,18 +614,19 @@ async function prosesTransaksi() {
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             },
-            body: JSON.stringify({
-                items:      items.map(i => ({ id: i.id, qty: i.qty })),
-                diskon:     diskonNominal(),
-                uang_bayar: _uangBayar,
-            }),
+            body: JSON.stringify(payload),
         });
 
         const data = res.headers.get('content-type')?.includes('application/json')
             ? await res.json()
             : { success: false, message: 'Respons server tidak dapat diproses. Muat ulang halaman.' };
 
-        if (data.success) {
+        if (!data.success) {
+            Swal.fire({ ...window.swalTheme, title: 'Gagal', text: data.message, icon: 'error' });
+            return;
+        }
+
+        if (_paymentMethod === 'cash') {
             Swal.fire({
                 ...window.swalTheme,
                 title: 'Transaksi Berhasil',
@@ -564,21 +638,109 @@ async function prosesTransaksi() {
                 confirmButtonText: 'Cetak Struk', cancelButtonText: 'Selesai',
             }).then(r => {
                 if (r.isConfirmed) window.open(`/kasir/struk/${data.transaksi}`, '_blank');
-                const ids = Object.keys(cart).map(Number);
-                ids.forEach(k => delete cart[k]);
-                ids.forEach(k => syncCardState(k));
-                resetPaymentFields();
-                renderCart();
-                window.location.reload();
+                resetAndReload();
             });
         } else {
-            Swal.fire({ ...window.swalTheme, title: 'Gagal', text: data.message, icon: 'error' });
+            // Xendit: buka invoice URL, mulai polling
+            window.open(data.invoice_url, '_blank');
+            Swal.close();
+            startPolling(data.transaksi, data.no_invoice);
         }
+
     } catch {
         Swal.fire({ ...window.swalTheme, title: 'Error', text: 'Koneksi gagal. Coba lagi.', icon: 'error' });
     } finally {
         btn.disabled = false;
     }
+}
+
+// ── Xendit polling ───────────────────────────────────────────
+function startPolling(transaksiId, noInvoice) {
+    stopPolling();
+
+    Swal.fire({
+        ...window.swalTheme,
+        title: 'Menunggu Pembayaran',
+        html: `<div style="font-size:13px;color:var(--color-ink-2);line-height:1.8;">
+            Invoice <span style="font-family:var(--font-mono);color:var(--color-ink);">${noInvoice}</span><br>
+            <span style="color:var(--color-ink-3);">Halaman pembayaran sudah dibuka di tab baru.</span><br><br>
+            <span id="poll-status" style="font-size:12px;color:var(--color-ink-4);">Memeriksa status…</span>
+        </div>`,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Cek Sekarang',
+        cancelButtonText: 'Batalkan Tunggu',
+        allowOutsideClick: false,
+        showLoaderOnConfirm: true,
+        preConfirm: async () => {
+            const result = await checkOnce(transaksiId);
+            const status = result?.status;
+
+            if (status === 'paid') return result; // lanjut ke .then
+
+            // Belum dibayar — tampilkan pesan, cegah modal tutup
+            const msg = status === 'expired'
+                ? 'Invoice sudah kedaluwarsa.'
+                : 'Pembayaran belum diterima. Silakan selesaikan pembayaran terlebih dahulu.';
+            Swal.showValidationMessage(msg);
+            return false;
+        },
+    }).then(r => {
+        stopPolling();
+        if (r.isDismissed) return;
+        if (r.value?.status === 'paid') {
+            onPaymentSuccess(r.value, noInvoice, transaksiId);
+        }
+    });
+
+    // Auto-poll setiap 4 detik — auto-close kalau sudah paid
+    _pollInterval = setInterval(async () => {
+        const result = await checkOnce(transaksiId);
+
+        if (result?.status === 'paid') {
+            stopPolling();
+            Swal.close();
+            onPaymentSuccess(result, noInvoice, transaksiId);
+            return;
+        }
+        if (result?.status === 'expired') {
+            stopPolling();
+            Swal.fire({ ...window.swalTheme, title: 'Invoice Kedaluwarsa', text: 'Invoice sudah expired. Buat transaksi baru.', icon: 'warning' });
+            resetAndReload();
+            return;
+        }
+        const el = document.getElementById('poll-status');
+        if (el) el.textContent = 'Terakhir dicek: ' + new Date().toLocaleTimeString('id-ID');
+    }, 4000);
+}
+
+function stopPolling() {
+    if (_pollInterval) { clearInterval(_pollInterval); _pollInterval = null; }
+}
+
+async function checkOnce(transaksiId) {
+    try {
+        const res = await fetch(`/kasir/payment-status/${transaksiId}`, {
+            headers: { 'Accept': 'application/json' }
+        });
+        return res.ok ? await res.json() : null;
+    } catch { return null; }
+}
+
+function onPaymentSuccess(data, noInvoice, transaksiId) {
+    Swal.fire({
+        ...window.swalTheme,
+        title: 'Pembayaran Diterima',
+        html: `<div style="font-size:13px;color:var(--color-ink-2);line-height:1.6;">
+            Invoice <span style="font-family:var(--font-mono);color:var(--color-ink);">${noInvoice}</span><br>
+            <strong style="color:var(--color-success);">Pembayaran berhasil dikonfirmasi.</strong>
+        </div>`,
+        icon: 'success', showCancelButton: true,
+        confirmButtonText: 'Cetak Struk', cancelButtonText: 'Selesai',
+    }).then(r => {
+        if (r.isConfirmed) window.open(`/kasir/struk/${transaksiId}`, '_blank');
+        resetAndReload();
+    });
 }
 
 // ── Search ───────────────────────────────────────────────────
