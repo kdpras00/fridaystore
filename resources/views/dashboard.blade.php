@@ -23,8 +23,14 @@
     </div>
     <div class="metric-card">
         <div class="metric-label">Stok Menipis</div>
-        <div class="metric-value">{{ number_format($stokRendah) }}</div>
-        <div class="metric-note">Perlu follow-up restock</div>
+        <div class="metric-value" style="{{ $stokRendah > 0 ? 'color:var(--color-danger);' : '' }}">{{ number_format($stokRendah) }}</div>
+        <div class="metric-note">
+            @if($stokRendah > 0)
+            <a href="{{ route('stok.index', ['status' => 'rendah']) }}" style="color:var(--color-danger);font-weight:500;text-decoration:underline;">Lihat produk</a>
+            @else
+            Semua stok dalam kondisi aman
+            @endif
+        </div>
     </div>
 </div>
 
@@ -58,7 +64,7 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" crossorigin="anonymous"></script>
 <script>
 Chart.defaults.color = 'oklch(0.556 0 0)';
 Chart.defaults.font.family = 'JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
@@ -70,8 +76,8 @@ new Chart(document.getElementById('chartPenjualan'), {
         labels: {!! $chartData->pluck('label')->toJson() !!},
         datasets: [{
             data: {!! $chartData->pluck('total')->toJson() !!},
-            backgroundColor: 'oklch(0.145 0 0 / 0.08)',
-            borderColor: 'oklch(0.145 0 0)',
+            backgroundColor: 'oklch(0.30 0.10 148 / 0.15)',
+            borderColor: 'oklch(0.30 0.10 148)',
             borderWidth: 1.5,
             borderRadius: 4,
             borderSkipped: false,

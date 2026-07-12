@@ -12,13 +12,16 @@ class RoleMiddleware
     {
         $user = $request->user();
 
-        if (!$user || !$user->hasAnyRole($roles)) {
-            return redirect()->route('dashboard')->with('swal_error', 'Akses ditolak. Anda tidak memiliki izin.');
+        // Check active status first — inactive users must be logged out regardless of role
+        if ($user && !$user->is_active) {
+            auth()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect()->route('login')->with('swal_error', 'Akun Anda dinonaktifkan. Hubungi administrator.');
         }
 
-        if (!$user->is_active) {
-            auth()->logout();
-            return redirect()->route('login')->with('swal_error', 'Akun Anda dinonaktifkan. Hubungi administrator.');
+        if (!$user || !$user->hasAnyRole($roles)) {
+            return redirect()->route('dashboard')->with('swal_error', 'Akses ditolak. Anda tidak memiliki izin.');
         }
 
         return $next($request);

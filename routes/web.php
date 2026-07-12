@@ -71,6 +71,12 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:kasir')->group(function () {
         Route::get('/kasir', [KasirController::class, 'index'])->name('kasir.index');
         Route::post('/kasir/transaksi', [KasirController::class, 'store'])->name('kasir.store');
-        Route::get('/kasir/struk/{transaksi}', [KasirController::class, 'struk'])->name('kasir.struk');
+        // Kasir can view their own transaction history
+        Route::get('/kasir/riwayat', [KasirController::class, 'riwayat'])->name('kasir.riwayat');
     });
+
+    // Struk: kasir (own), admin & owner (any) — access controlled in controller
+    Route::get('/kasir/struk/{transaksi}', [KasirController::class, 'struk'])
+        ->middleware('role:kasir,admin,owner')
+        ->name('kasir.struk');
 });

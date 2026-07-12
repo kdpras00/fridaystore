@@ -12,7 +12,10 @@ class DashboardController extends Controller
     {
         $totalProduk    = Produk::count();
         $totalKasir     = User::role('kasir')->count();
-        $stokRendah     = Produk::whereColumn('stok', '<=', 'stok_minimum')->count();
+        // Only count products that have a meaningful minimum stock set (> 0)
+        $stokRendah = Produk::where('stok_minimum', '>', 0)
+                        ->whereColumn('stok', '<=', 'stok_minimum')
+                        ->count();
         $transaksiHari  = Transaksi::whereDate('created_at', today())->count();
         $omzetHari      = Transaksi::whereDate('created_at', today())->sum('total_bayar');
         $omzetBulan     = Transaksi::whereMonth('created_at', now()->month)

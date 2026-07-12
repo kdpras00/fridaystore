@@ -20,43 +20,56 @@
 
 <div class="pos-layout" style="padding:0; margin:-20px -24px; height:calc(100vh - 64px);">
 
-    {{-- Left: Produk --}}
+    {{-- ── LEFT: Product grid ─────────────────────────────── --}}
     <div class="pos-product-panel" style="padding:16px 0 16px 16px;">
 
-        {{-- Search --}}
         <div style="position:relative;">
             <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--color-ink-4);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
             </svg>
-            <input type="text" id="search-produk" placeholder="Cari produk atau kode… [F2]" class="form-input" style="padding-left:34px;">
+            <input type="text" id="search-produk" placeholder="Cari produk atau kode… [F2]" class="form-input" style="padding-left:34px;" autocomplete="off">
         </div>
 
-        {{-- Grid --}}
         <div id="produk-grid" class="pos-product-grid">
             @foreach($produk as $p)
-            <button type="button" class="pos-product-card"
-                 data-id="{{ $p->id }}" data-nama="{{ $p->nama }}"
-                 data-harga="{{ $p->harga_jual }}" data-stok="{{ $p->stok }}"
+            @php($isLow = $p->stok <= $p->stok_minimum && $p->stok_minimum > 0)
+            <button type="button"
+                 class="pos-product-card {{ $isLow ? 'pos-product-card--low' : '' }}"
+                 style="position:relative;"
+                 data-id="{{ $p->id }}"
+                 data-nama="{{ $p->nama }}"
+                 data-harga="{{ $p->harga_jual }}"
+                 data-stok="{{ $p->stok }}"
                  data-kode="{{ $p->kode_produk }}"
                  aria-label="Tambah {{ $p->nama }} ke keranjang"
                  onclick="addToCartFromButton(this)">
+                <span id="badge-{{ $p->id }}" data-badge
+                      style="display:none;position:absolute;top:6px;right:6px;
+                             background:var(--color-amber);color:#fff;
+                             font-size:10px;font-weight:700;min-width:18px;height:18px;
+                             border-radius:999px;align-items:center;justify-content:center;
+                             padding:0 4px;line-height:1;"></span>
                 <div class="pos-product-thumb">
                     @if($p->gambar)
-                    <img src="{{ asset('storage/'.$p->gambar) }}" style="width:100%;height:100%;object-fit:cover;" alt="">
+                    <img src="{{ asset('storage/'.$p->gambar) }}" style="width:100%;height:100%;object-fit:cover;" alt="{{ $p->nama }}">
                     @else
                     <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="var(--color-ink-4)" stroke-width="1.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
                     @endif
                 </div>
-                <p style="font-size:12px;font-weight:500;color:var(--color-ink);line-height:1.3;margin-bottom:4px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">{{ $p->nama }}</p>
+                <p style="font-size:12px;font-weight:500;color:var(--color-ink);line-height:1.35;margin-bottom:4px;
+                           overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">{{ $p->nama }}</p>
                 <p style="font-size:12px;font-weight:600;color:var(--color-amber);font-family:var(--font-mono);">Rp {{ number_format($p->harga_jual, 0, ',', '.') }}</p>
-                <p style="font-size:10px;color:var(--color-ink-4);margin-top:2px;">stok: {{ $p->stok }}</p>
+                <p data-stok-label style="font-size:10px;margin-top:2px;
+                   color:{{ $isLow ? 'var(--color-danger)' : 'var(--color-ink-4)' }};">
+                    stok: {{ $p->stok }}{{ $isLow ? ' !' : '' }}
+                </p>
             </button>
             @endforeach
         </div>
 
-        <div id="produk-empty" style="display:none; flex:1; align-items:center; justify-content:center;">
+        <div id="produk-empty" style="display:none;flex:1;align-items:center;justify-content:center;">
             <p style="font-size:13px;color:var(--color-ink-4);">Tidak ada produk ditemukan</p>
         </div>
 
@@ -65,56 +78,108 @@
         </div>
     </div>
 
-    {{-- Right: Cart --}}
-    <div class="pos-cart" style="margin:12px 16px 12px 0; flex-shrink:0; width:268px;">
+    {{-- ── RIGHT: Cart ────────────────────────────────────── --}}
+    <div class="pos-cart" style="margin:12px 16px 12px 0;">
 
+        {{-- Header --}}
         <div class="pos-cart-meta">
             <div>
                 <p class="pos-cart-title">Keranjang</p>
-                <p class="pos-cart-hint">Pantau item sebelum bayar</p>
+                <p class="pos-cart-hint" id="cart-count-hint">Belum ada item</p>
             </div>
-            <button onclick="clearCart()" style="font-size:11px;color:var(--color-danger);background:none;border:none;cursor:pointer;padding:0;">Batal [F4]</button>
+            <button onclick="clearCart()"
+                    style="font-size:11px;color:var(--color-danger);background:none;border:none;cursor:pointer;padding:4px 0;">
+                Batal [F4]
+            </button>
         </div>
 
+        {{-- Total summary --}}
         <div class="pos-cart-total">
             <div class="pos-cart-total-label">Total Bayar</div>
             <div id="display-total" class="pos-cart-total-value">Rp 0</div>
         </div>
 
+        {{-- Items list --}}
         <div id="cart-items" class="pos-cart-items">
-            <div id="cart-empty" style="height:100%;display:flex;align-items:center;justify-content:center;">
+            <div id="cart-empty" style="height:72px;display:flex;align-items:center;justify-content:center;">
                 <p style="font-size:12px;color:var(--color-ink-4);">Keranjang kosong</p>
             </div>
+            <div id="cart-list"></div>
         </div>
 
-        <div class="pos-cart-footer" style="display:flex;flex-direction:column;gap:8px;">
-            <hr class="divider" style="margin:0;">
+        {{-- Payment footer --}}
+        <div class="pos-cart-footer" style="display:flex;flex-direction:column;gap:10px;">
 
-            <div style="display:flex;justify-content:space-between;font-size:12px;">
+            {{-- Subtotal row --}}
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;">
                 <span style="color:var(--color-ink-3);">Subtotal</span>
-                <span id="display-subtotal" style="font-family:var(--font-mono);color:var(--color-ink);">Rp 0</span>
+                <span id="display-subtotal" style="font-family:var(--font-mono);font-weight:500;color:var(--color-ink);">Rp 0</span>
             </div>
 
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;">
-                <label for="diskon-input" style="color:var(--color-ink-3);flex-shrink:0;">Diskon (Rp)</label>
-                <input type="number" id="diskon-input" min="0" value="0" class="form-input" style="text-align:right;width:100px;padding:4px 8px;font-size:12px;font-family:var(--font-mono);" oninput="updateTotal()">
+            {{-- Diskon --}}
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <span style="font-size:12.5px;color:var(--color-ink-3);flex-shrink:0;">Diskon</span>
+                <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                    {{-- Mode toggle: Rp / % --}}
+                    <div style="display:flex;border:1px solid var(--color-border);border-radius:6px;overflow:hidden;">
+                        <button id="mode-rp" type="button" onclick="setDiskonMode('nominal')"
+                                class="pos-diskon-mode-btn pos-diskon-mode-btn--active"
+                                style="padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;border:none;transition:background 100ms,color 100ms;">Rp</button>
+                        <button id="mode-pct" type="button" onclick="setDiskonMode('persen')"
+                                class="pos-diskon-mode-btn"
+                                style="padding:3px 8px;font-size:11px;font-weight:500;cursor:pointer;border:none;border-left:1px solid var(--color-border);transition:background 100ms,color 100ms;">%</button>
+                    </div>
+                    <input type="text" id="diskon-display" inputmode="numeric"
+                           placeholder="0"
+                           class="form-input"
+                           style="text-align:right;width:80px;padding:4px 8px;font-size:12px;font-family:var(--font-mono);"
+                           oninput="onDiskonInput(this)" onfocus="selectAll(this)" autocomplete="off">
+                </div>
             </div>
 
-            <hr class="divider" style="margin:0;">
+            {{-- Potongan line --}}
+            <div id="potongan-row" style="display:none;justify-content:space-between;align-items:center;font-size:12px;">
+                <span style="color:var(--color-ink-4);">Potongan</span>
+                <span id="display-diskon" style="font-family:var(--font-mono);color:var(--color-danger);"></span>
+            </div>
 
+            <hr style="margin:2px 0;border:none;border-top:1px solid var(--color-border);">
+
+            {{-- Uang Bayar --}}
             <div>
-                <label class="form-label" for="uang-bayar">Uang Bayar</label>
-                <input type="number" id="uang-bayar" min="0" value="0" class="form-input" style="text-align:right;font-family:var(--font-mono);" oninput="updateKembalian()">
+                <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+                    <span style="font-size:12.5px;font-weight:500;color:var(--color-ink-2);">Uang Bayar</span>
+                    <span id="sisa-label" style="font-size:11px;color:var(--color-danger);display:none;font-family:var(--font-mono);"></span>
+                </label>
+                <input type="text" id="uang-bayar-display" inputmode="numeric"
+                       placeholder="Masukkan nominal…"
+                       class="form-input"
+                       style="text-align:right;font-family:var(--font-mono);font-size:15px;font-weight:700;
+                              padding:9px 12px;color:var(--color-ink);"
+                       oninput="onUangBayarInput(this)" onfocus="selectAll(this)" autocomplete="off"
+                       maxlength="14">
             </div>
 
-            <div style="display:flex;justify-content:space-between;font-size:12px;">
-                <span style="color:var(--color-ink-3);">Kembalian</span>
-                <span id="display-kembalian" style="font-weight:700;font-family:var(--font-mono);color:var(--color-success);">Rp 0</span>
+            {{-- Quick-pay chips --}}
+            <div id="quick-pay-strip" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+
+            {{-- Kembalian — hidden until uang bayar > 0 --}}
+            <div id="kembalian-box"
+                 style="display:none;justify-content:space-between;align-items:center;
+                        padding:8px 12px;border-radius:8px;
+                        background:var(--color-success-dim);border:1px solid oklch(0.45 0.14 145 / 0.25);">
+                <span style="font-size:12px;color:var(--color-ink-3);">Kembalian</span>
+                <span id="display-kembalian"
+                      style="font-size:15px;font-weight:700;font-family:var(--font-mono);color:var(--color-success);"></span>
             </div>
 
-            <button id="proses-transaksi" type="button" onclick="prosesTransaksi()" class="btn btn-primary" style="width:100%;justify-content:center;padding:9px;font-size:13px;margin-top:4px;">
+            {{-- Proses --}}
+            <button id="proses-transaksi" type="button" onclick="prosesTransaksi()"
+                    class="btn btn-primary"
+                    style="width:100%;justify-content:center;padding:11px;font-size:13.5px;font-weight:600;margin-top:2px;">
                 Proses Bayar [F9]
             </button>
+
         </div>
     </div>
 </div>
@@ -122,188 +187,436 @@
 
 @push('scripts')
 <script>
+// ── State ───────────────────────────────────────────────────
 const cart = {};
+let _diskonRaw  = 0;
+let _diskonMode = 'nominal';  // 'nominal' | 'persen'
+let _uangBayar  = 0;
+let _uangTouched = false;     // true once user types into uang bayar
 
-function fmt(n) { return 'Rp ' + Math.max(0, parseInt(n)).toLocaleString('id-ID'); }
+const MAX_BAYAR = 100_000_000;
 
-function escapeHtml(value) {
-    return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' })[char]);
+// ── Helpers ─────────────────────────────────────────────────
+function fmt(n) {
+    return 'Rp\u00a0' + Math.max(0, Math.round(n)).toLocaleString('id-ID');
+}
+function fmtNum(n) {
+    return Math.max(0, Math.round(n)).toLocaleString('id-ID');
+}
+function parseRaw(str) {
+    const digits = String(str).replace(/\D/g, '');
+    return digits === '' ? 0 : (parseInt(digits, 10) || 0);
+}
+function selectAll(el) {
+    // defer so browser doesn't cancel the selection on mouseup
+    setTimeout(() => el.select(), 0);
+}
+function escapeHtml(v) {
+    return String(v).replace(/[&<>'"]/g,
+        c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'})[c]);
 }
 
+// ── Diskon mode toggle ───────────────────────────────────────
+function setDiskonMode(mode) {
+    _diskonMode = mode;
+    _diskonRaw  = 0;
+    document.getElementById('diskon-display').value = '';
+    document.getElementById('diskon-display').placeholder = mode === 'persen' ? '0' : '0';
+
+    const btnRp  = document.getElementById('mode-rp');
+    const btnPct = document.getElementById('mode-pct');
+    if (mode === 'nominal') {
+        btnRp.classList.add('pos-diskon-mode-btn--active');
+        btnPct.classList.remove('pos-diskon-mode-btn--active');
+    } else {
+        btnPct.classList.add('pos-diskon-mode-btn--active');
+        btnRp.classList.remove('pos-diskon-mode-btn--active');
+    }
+    updateTotal();
+}
+
+function onDiskonInput(el) {
+    const raw = parseRaw(el.value);
+    if (_diskonMode === 'persen') {
+        _diskonRaw = Math.min(raw, 100);
+        el.value   = raw === 0 ? '' : String(_diskonRaw);
+    } else {
+        _diskonRaw = Math.min(raw, subtotal());
+        el.value   = raw === 0 ? '' : fmtNum(_diskonRaw);
+    }
+    updateTotal();
+}
+
+// ── Uang Bayar ───────────────────────────────────────────────
+function onUangBayarInput(el) {
+    _uangTouched = true;
+    _uangBayar   = Math.min(parseRaw(el.value), MAX_BAYAR);
+    const raw = parseRaw(el.value);
+    el.value = raw === 0 ? '' : fmtNum(_uangBayar);
+    updateKembalian();
+}
+
+// ── Cart mutations ───────────────────────────────────────────
 function addToCartFromButton(button) {
-    addToCart(Number(button.dataset.id), button.dataset.nama, Number(button.dataset.harga), Number(button.dataset.stok));
+    const id    = Number(button.dataset.id);
+    const harga = Math.round(parseFloat(button.dataset.harga));
+    const stok  = Number(button.dataset.stok);
+    addToCart(id, button.dataset.nama, harga, stok);
 }
 
 function addToCart(id, nama, harga, stok) {
     if (!cart[id]) cart[id] = { id, nama, harga, qty: 0, stok };
-    if (cart[id].qty >= stok) { toast('warning', `Stok ${nama} hanya ${stok}`); return; }
+    if (cart[id].qty >= cart[id].stok) {
+        toast('warning', `Stok ${nama} hanya ${cart[id].stok}`);
+        return;
+    }
     cart[id].qty++;
+    syncCardState(id);
     renderCart();
 }
 
 function changeQty(id, delta) {
+    id = Number(id);
     if (!cart[id]) return;
-    cart[id].qty += delta;
-    if (cart[id].qty <= 0) delete cart[id];
+    if (delta > 0 && cart[id].qty >= cart[id].stok) {
+        toast('warning', `Stok ${cart[id].nama} hanya ${cart[id].stok}`);
+        return;
+    }
+    const newQty = cart[id].qty + delta;
+    if (newQty <= 0) {
+        delete cart[id];
+        syncCardState(id);
+        renderCart();
+        return;
+    }
+    cart[id].qty = newQty;
+    syncCardState(id);
     renderCart();
 }
 
+// Sync product card border + badge with current cart state
+function syncCardState(id) {
+    id = Number(id);
+    const btn   = document.querySelector(`.pos-product-card[data-id="${id}"]`);
+    if (!btn) return;
+    const item  = cart[id];
+    const qty   = item ? item.qty : 0;
+    const stok  = item ? item.stok : Number(btn.dataset.stok);
+    const label = btn.querySelector('[data-stok-label]');
+    const badge = btn.querySelector('[data-badge]');
+
+    if (label) {
+        const rem = stok - qty;
+        label.textContent = `stok: ${rem}${rem <= 0 ? ' !' : ''}`;
+        label.style.color = rem <= 0 ? 'var(--color-danger)' : 'var(--color-ink-4)';
+    }
+    if (qty > 0) {
+        btn.classList.add('pos-product-card--selected');
+        if (badge) { badge.textContent = qty; badge.style.display = 'inline-flex'; }
+    } else {
+        btn.classList.remove('pos-product-card--selected');
+        if (badge) badge.style.display = 'none';
+    }
+    if (item && item.qty >= item.stok) {
+        btn.setAttribute('disabled', 'disabled');
+    } else {
+        btn.removeAttribute('disabled');
+    }
+}
+
+// ── Render cart list ─────────────────────────────────────────
 function renderCart() {
-    const container = document.getElementById('cart-items');
-    const emptyEl   = document.getElementById('cart-empty');
-    const items     = Object.values(cart);
+    const listEl  = document.getElementById('cart-list');
+    const emptyEl = document.getElementById('cart-empty');
+    const hintEl  = document.getElementById('cart-count-hint');
+    const items   = Object.values(cart);
 
     if (!items.length) {
-        container.innerHTML = '';
+        listEl.innerHTML = '';
         emptyEl.style.display = 'flex';
-        container.appendChild(emptyEl);
+        hintEl.textContent = 'Belum ada item';
         return updateTotal();
     }
-    emptyEl.style.display = 'none';
 
-    container.innerHTML = items.map(item => `
+    emptyEl.style.display = 'none';
+    const totalItems = items.reduce((s, i) => s + i.qty, 0);
+    hintEl.textContent = `${totalItems} item${totalItems > 1 ? '' : ''} dipilih`;
+
+    listEl.innerHTML = items.map(item => `
     <div class="pos-cart-item">
-        <div style="flex:1;min-width:0;">
-            <p style="font-size:12px;font-weight:500;color:var(--color-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.nama)}</p>
-            <p style="font-size:10.5px;color:var(--color-ink-4);font-family:var(--font-mono);">${fmt(item.harga)}</p>
+        <div style="flex:1;min-width:0;padding-right:6px;">
+            <p style="font-size:12.5px;font-weight:500;color:var(--color-ink);
+                      line-height:1.35;word-break:break-word;">${escapeHtml(item.nama)}</p>
+            <p style="font-size:11px;color:var(--color-ink-4);font-family:var(--font-mono);margin-top:1px;">
+                ${fmt(item.harga)} × ${item.qty} = <strong style="color:var(--color-ink-2);">${fmt(item.harga * item.qty)}</strong>
+            </p>
         </div>
-        <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
-            <button type="button" aria-label="Kurangi jumlah ${escapeHtml(item.nama)}" onclick="changeQty(${item.id},-1)" class="btn btn-ghost btn-sm btn-icon" style="cursor:pointer;padding:2px 5px;font-size:13px;line-height:1;">−</button>
-            <span style="font-size:12px;font-weight:700;min-width:18px;text-align:center;color:var(--color-ink);">${item.qty}</span>
-            <button type="button" aria-label="Tambah jumlah ${escapeHtml(item.nama)}" onclick="changeQty(${item.id},1)" class="btn btn-ghost btn-sm btn-icon" style="cursor:pointer;padding:2px 5px;font-size:13px;line-height:1;">+</button>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+            <button type="button" class="qty-btn qty-btn--minus"
+                    aria-label="Kurangi ${escapeHtml(item.nama)}"
+                    onclick="changeQty(${item.id},-1)">−</button>
+            <span style="font-size:13px;font-weight:700;min-width:24px;text-align:center;
+                         color:var(--color-ink);font-family:var(--font-mono);">${item.qty}</span>
+            <button type="button" class="qty-btn"
+                    aria-label="Tambah ${escapeHtml(item.nama)}"
+                    onclick="changeQty(${item.id},1)">+</button>
         </div>
-        <span style="font-size:11.5px;font-weight:600;font-family:var(--font-mono);color:var(--color-amber);width:68px;text-align:right;flex-shrink:0;">${fmt(item.harga*item.qty)}</span>
     </div>`).join('');
 
     updateTotal();
 }
 
-function subtotal() { return Object.values(cart).reduce((s,i)=>s+i.harga*i.qty, 0); }
-function diskon()   { return Math.max(0, parseInt(document.getElementById('diskon-input').value)||0); }
-function total()    { return Math.max(0, subtotal() - diskon()); }
+// ── Calculations ─────────────────────────────────────────────
+function subtotal() {
+    return Object.values(cart).reduce((s, i) => s + Math.round(i.harga) * i.qty, 0);
+}
+function diskonNominal() {
+    const sub = subtotal();
+    if (!sub) return 0;
+    if (_diskonMode === 'persen') return Math.round(sub * Math.min(_diskonRaw, 100) / 100);
+    return Math.min(_diskonRaw, sub);
+}
+function total() {
+    return Math.max(0, subtotal() - diskonNominal());
+}
 
 function updateTotal() {
-    document.getElementById('display-subtotal').textContent = fmt(subtotal());
-    document.getElementById('display-total').textContent    = fmt(total());
+    const sub = subtotal();
+    const dis = diskonNominal();
+    const tot = total();
+
+    document.getElementById('display-subtotal').textContent = fmt(sub);
+    document.getElementById('display-total').textContent    = fmt(tot);
+
+    const potonganRow = document.getElementById('potongan-row');
+    const diskonEl    = document.getElementById('display-diskon');
+    if (dis > 0) {
+        diskonEl.textContent       = '− ' + fmt(dis);
+        potonganRow.style.display  = 'flex';
+    } else {
+        potonganRow.style.display  = 'none';
+    }
+
+    buildQuickPay();
     updateKembalian();
 }
 
 function updateKembalian() {
-    const uang = parseInt(document.getElementById('uang-bayar').value)||0;
-    const kem  = uang - total();
+    const tot  = total();
+    const box  = document.getElementById('kembalian-box');
     const el   = document.getElementById('display-kembalian');
-    el.textContent = fmt(Math.max(0, kem));
-    el.style.color = kem < 0 ? 'var(--color-danger)' : 'var(--color-success)';
+    const sisa = document.getElementById('sisa-label');
+
+    if (!_uangTouched || _uangBayar === 0) {
+        // User hasn't typed yet — hide kembalian, hide sisa
+        box.style.display  = 'none';
+        sisa.style.display = 'none';
+        return;
+    }
+
+    const kem = _uangBayar - tot;
+
+    if (kem >= 0) {
+        // Enough — show green kembalian box
+        el.textContent     = fmt(kem);
+        el.style.color     = 'var(--color-success)';
+        box.style.background    = 'var(--color-success-dim)';
+        box.style.borderColor   = 'oklch(0.45 0.14 145 / 0.25)';
+        box.style.display  = 'flex';
+        sisa.style.display = 'none';
+    } else {
+        // Not enough — show red "kurang" hint, no kembalian box
+        box.style.display  = 'none';
+        sisa.textContent   = 'Kurang ' + fmt(Math.abs(kem));
+        sisa.style.display = 'inline';
+    }
 }
 
+// ── Quick-pay chips ──────────────────────────────────────────
+// Only offer clean denominations: exact, then round up to nearest
+// 5k/10k/20k/50k/100k — skip any that's identical to "Pas"
+function setUangBayar(amount) {
+    _uangTouched = true;
+    _uangBayar   = Math.min(amount, MAX_BAYAR);
+    const el = document.getElementById('uang-bayar-display');
+    el.value = fmtNum(_uangBayar);
+    updateKembalian();
+}
+
+function buildQuickPay() {
+    const strip = document.getElementById('quick-pay-strip');
+    const tot   = total();
+    if (!tot) { strip.innerHTML = ''; return; }
+
+    const tiers   = [5000, 10000, 20000, 50000, 100000, 500000, 1000000];
+    const results = [tot]; // first is always "Pas" (exact)
+    for (const d of tiers) {
+        const rounded = Math.ceil(tot / d) * d;
+        if (rounded !== tot) results.push(rounded);
+        if (results.length >= 4) break;
+    }
+
+    strip.innerHTML = results.slice(0, 4).map((v, i) =>
+        `<button type="button" onclick="setUangBayar(${v})"
+            class="btn btn-ghost btn-sm pos-qp-btn"
+            style="flex:1;justify-content:center;font-family:var(--font-mono);
+                   font-size:11.5px;padding:6px 4px;${i === 0 ? 'font-weight:600;' : ''}">
+            ${i === 0 ? 'Pas' : fmt(v)}
+        </button>`
+    ).join('');
+}
+
+// ── Clear cart ───────────────────────────────────────────────
 function clearCart() {
     if (!Object.keys(cart).length) return;
     Swal.fire({
         title: 'Batalkan transaksi?',
         icon: 'warning', showCancelButton: true,
         confirmButtonText: 'Ya, batal', cancelButtonText: 'Tidak',
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#6c757d',
-    }).then(r => { if(r.isConfirmed){ Object.keys(cart).forEach(k=>delete cart[k]); renderCart(); } });
+        confirmButtonColor: '#d33', cancelButtonColor: '#6c757d',
+    }).then(r => {
+        if (!r.isConfirmed) return;
+        const ids = Object.keys(cart).map(Number);
+        ids.forEach(k => delete cart[k]);
+        ids.forEach(k => syncCardState(k));
+        resetPaymentFields();
+        renderCart();
+    });
 }
 
+function resetPaymentFields() {
+    _diskonRaw   = 0;
+    _uangBayar   = 0;
+    _uangTouched = false;
+    _diskonMode  = 'nominal';
+    document.getElementById('diskon-display').value      = '';
+    document.getElementById('uang-bayar-display').value  = '';
+    document.getElementById('quick-pay-strip').innerHTML = '';
+    document.getElementById('kembalian-box').style.display = 'none';
+    document.getElementById('sisa-label').style.display    = 'none';
+    document.getElementById('potongan-row').style.display  = 'none';
+    setDiskonMode('nominal'); // resets toggle buttons
+}
+
+// ── Proses transaksi ─────────────────────────────────────────
 async function prosesTransaksi() {
     const items = Object.values(cart);
-    if (!items.length) { toast('warning','Keranjang masih kosong'); return; }
-    const t   = total();
-    const u   = parseInt(document.getElementById('uang-bayar').value)||0;
-    if (u < t) { toast('error','Uang bayar kurang dari total'); return; }
+    if (!items.length) { toast('warning', 'Keranjang masih kosong'); return; }
+
+    const t = total();
+
+    if (!_uangTouched || _uangBayar === 0) {
+        document.getElementById('uang-bayar-display').focus();
+        toast('warning', 'Masukkan jumlah uang yang diterima');
+        return;
+    }
+    if (_uangBayar < t) {
+        const kurang = (t - _uangBayar).toLocaleString('id-ID');
+        toast('error', `Uang bayar kurang Rp\u00a0${kurang}`);
+        document.getElementById('uang-bayar-display').focus();
+        return;
+    }
 
     const conf = await Swal.fire({
         ...window.swalTheme,
         title: 'Proses transaksi?',
-        html: `<div style="font-size:13px;color:var(--color-ink-2);">Total <span style="color:var(--color-ink);font-weight:700;">${fmt(t)}</span> · Kembali <span style="color:var(--color-success);font-weight:700;">${fmt(u-t)}</span></div>`,
+        html: `<div style="font-size:13px;color:var(--color-ink-2);line-height:1.6;">
+            Total &nbsp;<strong style="color:var(--color-ink);">${fmt(t)}</strong><br>
+            Kembali <strong style="color:var(--color-success);">${fmt(_uangBayar - t)}</strong>
+        </div>`,
         icon: 'question', showCancelButton: true,
         confirmButtonText: 'Proses!', cancelButtonText: 'Batal',
     });
     if (!conf.isConfirmed) return;
 
-    const submitButton = document.getElementById('proses-transaksi');
-    submitButton.disabled = true;
-    Swal.fire({ ...window.swalTheme, title:'Memproses…', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+    const btn = document.getElementById('proses-transaksi');
+    btn.disabled = true;
+    Swal.fire({ ...window.swalTheme, title: 'Memproses…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
     try {
-        const res  = await fetch('{{ route('kasir.store') }}', {
-            method:'POST',
-            headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content},
-            body: JSON.stringify({ items: items.map(i=>({id:i.id,qty:i.qty})), diskon:diskon(), uang_bayar:u }),
+        const res = await fetch('{{ route('kasir.store') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+            body: JSON.stringify({
+                items:      items.map(i => ({ id: i.id, qty: i.qty })),
+                diskon:     diskonNominal(),
+                uang_bayar: _uangBayar,
+            }),
         });
+
         const data = res.headers.get('content-type')?.includes('application/json')
             ? await res.json()
-            : { success: false, message: 'Respons server tidak dapat diproses. Silakan masuk kembali.' };
+            : { success: false, message: 'Respons server tidak dapat diproses. Muat ulang halaman.' };
 
         if (data.success) {
             Swal.fire({
                 ...window.swalTheme,
-                title:'Transaksi Berhasil',
-                html:`<div style="font-size:13px;color:var(--color-ink-2);">Invoice <span style="font-family:var(--font-mono);color:var(--color-ink);">${data.no_invoice}</span><br>Kembalian <span style="color:var(--color-success);font-weight:700;">${fmt(data.kembalian)}</span></div>`,
-                icon:'success', showCancelButton:true,
-                confirmButtonText:'Cetak Struk', cancelButtonText:'Selesai',
+                title: 'Transaksi Berhasil',
+                html: `<div style="font-size:13px;color:var(--color-ink-2);line-height:1.6;">
+                    Invoice <span style="font-family:var(--font-mono);color:var(--color-ink);">${data.no_invoice}</span><br>
+                    Kembalian <strong style="color:var(--color-success);">${fmt(data.kembalian)}</strong>
+                </div>`,
+                icon: 'success', showCancelButton: true,
+                confirmButtonText: 'Cetak Struk', cancelButtonText: 'Selesai',
             }).then(r => {
-                if(r.isConfirmed) window.open(`/kasir/struk/${data.transaksi}`,'_blank');
-                Object.keys(cart).forEach(k=>delete cart[k]);
-                document.getElementById('diskon-input').value = 0;
-                document.getElementById('uang-bayar').value   = 0;
+                if (r.isConfirmed) window.open(`/kasir/struk/${data.transaksi}`, '_blank');
+                const ids = Object.keys(cart).map(Number);
+                ids.forEach(k => delete cart[k]);
+                ids.forEach(k => syncCardState(k));
+                resetPaymentFields();
                 renderCart();
+                window.location.reload();
             });
         } else {
-            Swal.fire({ ...window.swalTheme, title:'Gagal', text:data.message, icon:'error' });
+            Swal.fire({ ...window.swalTheme, title: 'Gagal', text: data.message, icon: 'error' });
         }
-    } catch(e) {
-        Swal.fire({ ...window.swalTheme, title:'Error', text:'Koneksi gagal.', icon:'error' });
+    } catch {
+        Swal.fire({ ...window.swalTheme, title: 'Error', text: 'Koneksi gagal. Coba lagi.', icon: 'error' });
     } finally {
-        submitButton.disabled = false;
+        btn.disabled = false;
     }
 }
 
-document.getElementById('search-produk').addEventListener('input', function() {
+// ── Search ───────────────────────────────────────────────────
+document.getElementById('search-produk').addEventListener('input', function () {
     const q = this.value.toLowerCase();
     let visible = 0;
     document.querySelectorAll('.pos-product-card').forEach(c => {
         const match = c.dataset.nama.toLowerCase().includes(q) || c.dataset.kode.toLowerCase().includes(q);
         c.style.display = match ? '' : 'none';
-        if(match) visible++;
+        if (match) visible++;
     });
     document.getElementById('produk-empty').style.display = visible ? 'none' : 'flex';
-    document.getElementById('produk-grid').style.display = visible ? '' : 'none';
+    document.getElementById('produk-grid').style.display  = visible ? '' : 'none';
 });
 
-// Keyboard Shortcuts and Autofocus
+// ── Keyboard shortcuts ───────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('search-produk').focus();
+    updateTotal(); // initialise displays
 });
 
-document.addEventListener('keydown', function(e) {
-    // F2: Focus Search Input
+document.addEventListener('keydown', function (e) {
     if (e.key === 'F2') {
         e.preventDefault();
-        const searchInput = document.getElementById('search-produk');
-        searchInput.focus();
-        searchInput.select();
+        const s = document.getElementById('search-produk');
+        s.focus(); s.select();
     }
-    // F4: Cancel/Clear Cart
-    if (e.key === 'F4') {
-        e.preventDefault();
-        clearCart();
-    }
-    // F9: Pay / Process transaction
-    if (e.key === 'F9') {
-        e.preventDefault();
-        prosesTransaksi();
-    }
-    // Enter in search: Add first matched product
+    if (e.key === 'F4') { e.preventDefault(); clearCart(); }
+    if (e.key === 'F9') { e.preventDefault(); prosesTransaksi(); }
     if (e.key === 'Enter' && document.activeElement === document.getElementById('search-produk')) {
         e.preventDefault();
-        const visibleCards = Array.from(document.querySelectorAll('.pos-product-card')).filter(c => c.style.display !== 'none');
-        if (visibleCards.length > 0) {
-            visibleCards[0].click();
-            document.getElementById('search-produk').value = '';
-            document.getElementById('search-produk').dispatchEvent(new Event('input'));
+        const visible = Array.from(document.querySelectorAll('.pos-product-card'))
+            .filter(c => c.style.display !== 'none' && !c.disabled);
+        if (visible.length) {
+            visible[0].click();
+            const s = document.getElementById('search-produk');
+            s.value = '';
+            s.dispatchEvent(new Event('input'));
         }
     }
 });

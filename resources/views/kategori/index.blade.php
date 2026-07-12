@@ -3,16 +3,6 @@
 @section('page-title', 'Kategori Produk')
 
 @section('content')
-<div class="page-intro">
-    <div class="page-intro-copy">
-        <div class="page-intro-title">Kategori Produk</div>
-        <div class="page-intro-sub">Gunakan kategori untuk menjaga katalog tetap rapi dan mempermudah filter di produk, stok, dan laporan.</div>
-    </div>
-    <div class="page-intro-meta">
-        <span class="info-chip">Total <strong>{{ number_format($kategori->count()) }}</strong></span>
-        <span class="info-chip">Pengelompokan <strong>Aktif</strong></span>
-    </div>
-</div>
 
 <div class="category-layout" style="display:grid; grid-template-columns:280px 1fr; gap:16px; align-items:start;">
 

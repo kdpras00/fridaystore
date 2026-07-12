@@ -7,7 +7,7 @@
     <form method="GET" class="filter-bar">
         <div>
             <label class="form-label">Cari</label>
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Nama produk…" class="form-input" style="width:220px;">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Nama atau kode produk…" class="form-input" style="width:220px;">
         </div>
         <div style="display:flex;gap:8px;align-items:flex-end;">
             <button type="submit" class="btn btn-ghost">Cari</button>

@@ -9,7 +9,7 @@ class KategoriProdukSeeder extends Seeder
 {
     public function run(): void
     {
-        foreach (['Jaket', 'Sepatu', 'Baju'] as $nama) {
+        foreach (['Jacket', 'Parka', 'Hoodie', 'Crewneck'] as $nama) {
             KategoriProduk::create(['nama' => $nama]);
         }
     }

@@ -34,7 +34,7 @@ class KasirController extends Controller
             'items.*.id' => ['required', 'distinct', 'exists:produk,id'],
             'items.*.qty'=> ['required', 'integer', 'min:1'],
             'diskon'     => ['nullable', 'numeric', 'min:0'],
-            'uang_bayar' => ['required', 'numeric', 'min:0'],
+            'uang_bayar' => ['required', 'numeric', 'min:1'],
         ]);
 
         DB::beginTransaction();
@@ -53,7 +53,8 @@ class KasirController extends Controller
                     ], 422);
                 }
 
-                $subtotal    = $produk->harga_jual * $item['qty'];
+                // Round to integer to avoid float precision drift across items
+                $subtotal    = (int) round($produk->harga_jual * $item['qty']);
                 $totalHarga += $subtotal;
 
                 $details[] = [
@@ -75,7 +76,7 @@ class KasirController extends Controller
                 ]);
             }
 
-            $diskon     = (float) ($request->diskon ?? 0);
+            $diskon = (int) round((float) ($request->diskon ?? 0));
 
             if ($diskon > $totalHarga) {
                 DB::rollBack();
@@ -83,23 +84,30 @@ class KasirController extends Controller
             }
 
             $totalBayar = max(0, $totalHarga - $diskon);
-            $kembalian  = $request->uang_bayar - $totalBayar;
+            $uangBayar  = (int) round((float) $request->uang_bayar);
+            $kembalian  = $uangBayar - $totalBayar;
 
             if ($kembalian < 0) {
                 DB::rollBack();
                 return response()->json(['success' => false, 'message' => 'Uang bayar kurang.'], 422);
             }
 
-            // Generate secure unique invoice number with collision check loop
-            $invoiceSeed = 'INV-' . date('Ymd') . '-';
-            $invoiceIndex = Transaksi::whereDate('created_at', today())->count() + 1;
-            do {
-                $noInvoice = $invoiceSeed . str_pad($invoiceIndex, 4, '0', STR_PAD_LEFT);
-                $exists = Transaksi::where('no_invoice', $noInvoice)->exists();
-                if ($exists) {
-                    $invoiceIndex++;
+            // Generate invoice number inside the locked transaction to prevent race conditions.
+            // Use a dedicated counter row or fall back to a retry loop capped at 10 attempts.
+            $prefix = 'INV-' . date('Ymd') . '-';
+            $noInvoice = null;
+            for ($attempt = 1; $attempt <= 10; $attempt++) {
+                $count     = Transaksi::whereDate('created_at', today())->count();
+                $candidate = $prefix . str_pad($count + $attempt, 4, '0', STR_PAD_LEFT);
+                if (!Transaksi::where('no_invoice', $candidate)->exists()) {
+                    $noInvoice = $candidate;
+                    break;
                 }
-            } while ($exists);
+            }
+            if (!$noInvoice) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'Gagal membuat nomor invoice. Coba lagi.'], 500);
+            }
 
             $transaksi = Transaksi::create([
                 'no_invoice'  => $noInvoice,
@@ -130,9 +138,30 @@ class KasirController extends Controller
         }
     }
 
+    public function riwayat(Request $request)
+    {
+        $dari   = $request->filled('dari')   ? $request->dari   : now()->startOfMonth()->toDateString();
+        $sampai = $request->filled('sampai') ? $request->sampai : now()->toDateString();
+
+        $transaksi = Transaksi::with('detail')
+            ->where('kasir_id', auth()->id())
+            ->whereDate('created_at', '>=', $dari)
+            ->whereDate('created_at', '<=', $sampai)
+            ->orderByDesc('created_at')
+            ->get();
+
+        $totalOmzet = $transaksi->sum('total_bayar');
+
+        return view('kasir.riwayat', compact('transaksi', 'totalOmzet', 'dari', 'sampai'));
+    }
+    
     public function struk(Transaksi $transaksi)
     {
-        abort_unless($transaksi->kasir_id === auth()->id(), 403);
+        // Admin & owner can view any receipt; kasir only their own.
+        $user = auth()->user();
+        if ($user->hasRole('kasir')) {
+            abort_unless($transaksi->kasir_id === $user->id, 403);
+        }
 
         $transaksi->load(['detail', 'kasir']);
         return view('kasir.struk', compact('transaksi'));

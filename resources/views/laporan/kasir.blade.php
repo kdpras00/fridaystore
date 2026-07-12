@@ -6,17 +6,6 @@
 
 @php($totalKasir = $kasirStats->count())
 
-<div class="page-intro">
-    <div class="page-intro-copy">
-        <div class="page-intro-title">Laporan Per Kasir</div>
-        <div class="page-intro-sub">Bandingkan omzet dan volume transaksi setiap kasir untuk memantau performa harian dengan cepat.</div>
-    </div>
-    <div class="page-intro-meta">
-        <span class="info-chip">Kasir tampil <strong>{{ number_format($totalKasir) }}</strong></span>
-        <span class="info-chip">Periode <strong>{{ request('dari') || request('sampai') ? 'Custom' : 'All' }}</strong></span>
-    </div>
-</div>
-
 {{-- Sub-tabs --}}
 <div class="tab-list">
     <a href="{{ route('laporan.index') }}" class="tab-item {{ request()->routeIs('laporan.index') ? 'active' : '' }}">

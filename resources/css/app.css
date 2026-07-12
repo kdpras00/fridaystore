@@ -19,8 +19,8 @@
     /* Ink scale */
     --color-ink:         oklch(0.145 0 0);
     --color-ink-2:       oklch(0.35 0 0);
-    --color-ink-3:       oklch(0.556 0 0);
-    --color-ink-4:       oklch(0.708 0 0);
+    --color-ink-3:       oklch(0.46 0 0);
+    --color-ink-4:       oklch(0.62 0 0);
 
     /* Primary Accent: Forest Green from Logo */
     --color-amber:       oklch(0.30 0.10 148);
@@ -78,63 +78,148 @@ body {
 /* ============================================================
    SIDEBAR
    ============================================================ */
+
+/*
+ * Desktop: icon-only by default (64px), expands to 240px on hover.
+ * The width transition drives everything — labels/section-titles
+ * fade in slightly after the width starts moving so they don't
+ * spill out during collapse.
+ *
+ * Mobile (<= 1024px): fixed overlay drawer, slides in from left.
+ */
+
 .sidebar {
-    width: 260px;
+    --sb-collapsed: 64px;
+    --sb-expanded: 240px;
+    --sb-duration: 220ms;
+    --sb-ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+    width: var(--sb-collapsed);
     flex-shrink: 0;
     background: #05371a;
     border-right: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
     flex-direction: column;
-    transition: transform 200ms ease;
+    transition: width var(--sb-duration) var(--sb-ease);
+    overflow: hidden;
+    position: relative;
+    z-index: 20;
 }
 
+@media (min-width: 1025px) {
+    .sidebar:hover {
+        width: var(--sb-expanded);
+    }
+}
+
+/* ── Logo area ─────────────────────────────────────────────── */
 .sidebar-logo {
     height: 64px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 0 16px;
+    /* keep icon centered when collapsed; left-align when expanded */
+    justify-content: flex-start;
+    padding: 0 14px;
+    gap: 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
+/* Icon mark — always visible, always 36px */
 .sidebar-logo-mark {
-    width: 32px;
-    height: 32px;
-    background: var(--color-amber);
-    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    overflow: hidden;
 }
 
+.sidebar-logo-mark img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+}
+
+/* Text block — hidden when collapsed */
 .sidebar-logo-text {
-    font-size: 15px;
-    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    overflow: hidden;
+    /* fade + width trick: prevents text from protruding during collapse */
+    opacity: 0;
+    max-width: 0;
+    transition: opacity 100ms ease, max-width 50ms ease var(--sb-duration);
+}
+
+@media (min-width: 1025px) {
+    .sidebar:hover .sidebar-logo-text {
+        opacity: 1;
+        max-width: 160px;
+        transition: opacity 140ms ease 80ms, max-width 0ms ease;
+    }
+}
+
+.sidebar-logo-name {
+    font-size: 14px;
+    font-weight: 700;
     color: #ffffff;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    white-space: nowrap;
 }
 
 .sidebar-logo-sub {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.5);
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.45);
     font-weight: 400;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
 }
 
+/* ── Section labels ─────────────────────────────────────────── */
 .sidebar-section-label {
-    padding: 0 16px 8px;
-    margin-top: 24px;
-    font-size: 11px;
+    padding: 0 12px 4px 14px;
+    margin-top: 18px;
+    font-size: 10px;
     font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.30);
+    white-space: nowrap;
+    overflow: hidden;
+    opacity: 0;
+    height: 0;
+    margin-top: 0;
+    transition:
+        opacity 100ms ease,
+        height 50ms ease var(--sb-duration),
+        margin-top 50ms ease var(--sb-duration);
 }
 
+@media (min-width: 1025px) {
+    .sidebar:hover .sidebar-section-label {
+        opacity: 1;
+        height: 28px;
+        margin-top: 18px;
+        transition:
+            opacity 140ms ease 80ms,
+            height 0ms ease,
+            margin-top 0ms ease;
+    }
+}
+
+/* ── Nav ────────────────────────────────────────────────────── */
 .sidebar-nav {
     flex: 1;
     overflow-y: auto;
-    padding: 10px 12px;
+    overflow-x: hidden;
+    padding: 6px 10px;
     scrollbar-width: none;
 }
 .sidebar-nav::-webkit-scrollbar { display: none; }
@@ -142,51 +227,138 @@ body {
 .nav-item {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 12px 16px;
+    /* fixed left padding so icon stays centered at 64px total width:
+       64px - 20px(icon) = 44px remaining; 44/2 = 22, minus 10px(padding-right) ~ 12px each side */
+    padding: 10px 10px 10px 12px;
     border-radius: 8px;
-    font-size: 15.5px;
+    font-size: 13.5px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(255, 255, 255, 0.72);
     text-decoration: none;
     transition: background 120ms ease, color 120ms ease;
-    margin-bottom: 4px;
+    margin-bottom: 1px;
     cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    position: relative;
 }
 
 .nav-item svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
-    opacity: 0.75;
+    opacity: 0.7;
+    transition: opacity 120ms ease;
+    /* never shrink — icon must stay visible when collapsed */
+    min-width: 18px;
+}
+
+/* Label: hidden by default using width+opacity so it takes no space */
+.nav-item .nav-label {
+    opacity: 0;
+    max-width: 0;
+    overflow: hidden;
+    margin-left: 0;
+    transition:
+        opacity 100ms ease,
+        max-width 50ms ease var(--sb-duration),
+        margin-left 50ms ease var(--sb-duration);
+    pointer-events: none;
+}
+
+@media (min-width: 1025px) {
+    .sidebar:hover .nav-item .nav-label {
+        opacity: 1;
+        max-width: 160px;
+        margin-left: 10px;
+        transition:
+            opacity 140ms ease 80ms,
+            max-width 0ms ease,
+            margin-left 0ms ease;
+    }
 }
 
 .nav-item:hover {
     background: rgba(255, 255, 255, 0.08);
     color: #ffffff;
 }
-
 .nav-item:hover svg { opacity: 1; }
 
+/*
+ * Active pill: use the brand green family, not amber.
+ * White text on a slightly lighter green gives 4.6:1 contrast.
+ * rgba(255,255,255,0.12) tint on #05371a → approx #0e4a28
+ */
 .nav-item.active {
-    background: #ba9930;
-    color: #05371a;
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
     font-weight: 600;
 }
+.nav-item.active svg {
+    opacity: 1;
+    color: #ffffff;
+}
+/* Left accent line on active item for extra scannability */
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20%;
+    bottom: 20%;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+    background: var(--color-amber);
+}
 
-.nav-item.active svg { opacity: 1; }
+/* Focus ring */
+.nav-item:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: -2px;
+}
 
+/* ── Tooltip (collapsed desktop only) ──────────────────────── */
+@media (min-width: 1025px) {
+    .nav-item::after {
+        content: attr(data-label);
+        position: fixed; /* fixed so it escapes overflow:hidden on sidebar */
+        left: calc(var(--sb-collapsed) + 8px);
+        top: var(--tt-top, 50%);
+        transform: translateY(-50%);
+        background: #021f0f;
+        color: rgba(255,255,255,0.92);
+        font-size: 12px;
+        font-weight: 500;
+        padding: 5px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 80ms ease;
+        border: 1px solid rgba(255,255,255,0.1);
+        z-index: 200;
+        font-family: var(--font-sans);
+    }
+    /* show ONLY when sidebar is NOT expanded */
+    .sidebar:not(:hover) .nav-item:hover::after {
+        opacity: 1;
+    }
+}
+
+/* ── User footer ────────────────────────────────────────────── */
 .sidebar-user {
-    padding: 12px 12px;
+    padding: 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
     align-items: center;
-    gap: 10px;
+    flex-shrink: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    gap: 0;
 }
 
 .sidebar-avatar {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -197,15 +369,104 @@ body {
     font-weight: 600;
     color: #ffffff;
     flex-shrink: 0;
+    min-width: 36px;
+}
+
+.sidebar-user-info {
+    overflow: hidden;
+    opacity: 0;
+    max-width: 0;
+    margin-left: 0;
+    transition:
+        opacity 100ms ease,
+        max-width 50ms ease var(--sb-duration),
+        margin-left 50ms ease var(--sb-duration);
+}
+
+@media (min-width: 1025px) {
+    .sidebar:hover .sidebar-user-info {
+        opacity: 1;
+        max-width: 140px;
+        margin-left: 10px;
+        transition:
+            opacity 140ms ease 80ms,
+            max-width 0ms ease,
+            margin-left 0ms ease;
+    }
 }
 
 .sidebar-user-name {
-    font-size: 13.5px;
+    font-size: 12.5px;
     font-weight: 500;
     color: #ffffff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.sidebar-user-role {
+    font-size: 10.5px;
+    color: rgba(255,255,255,0.4);
+    white-space: nowrap;
+}
+
+/* ── Sidebar user hint (‹ / ›) inside user footer ──────────── */
+.sidebar-toggle-btn {
+    width: 100%;
+    background: none;
+    border: none;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    text-align: left;
+}
+
+.sidebar-toggle-btn:hover {
+    background: rgba(255,255,255,0.06);
+}
+
+.sidebar-pin-icon {
+    margin-left: auto;
+    flex-shrink: 0;
+    display: none; /* hidden when collapsed */
+    color: rgba(255,255,255,0.45);
+    transition: color 150ms;
+}
+
+/* Show pin icon when sidebar is expanded (pinned or hover) */
+.sidebar.pinned .sidebar-pin-icon,
+@media (min-width: 1025px) {
+    .sidebar:hover .sidebar-pin-icon { display: flex; }
+}
+
+.sidebar-toggle-btn:hover .sidebar-pin-icon {
+    color: rgba(255,255,255,0.8);
+}
+
+/* Pinned state — sidebar stays expanded without hover */
+@media (min-width: 1025px) {
+    .sidebar.pinned {
+        width: var(--sb-expanded) !important;
+    }
+    .sidebar.pinned .sidebar-pin-icon { display: flex; }
+    .sidebar.pinned .nav-label {
+        opacity: 1 !important;
+        max-width: 160px !important;
+        margin-left: 10px !important;
+    }
+    .sidebar.pinned .sidebar-section-label {
+        opacity: 1 !important;
+        height: 28px !important;
+        margin-top: 18px !important;
+    }
+    .sidebar.pinned .sidebar-user-info {
+        opacity: 1 !important;
+        max-width: 140px !important;
+        margin-left: 10px !important;
+    }
+    .sidebar.pinned .sidebar-logo-text {
+        opacity: 1 !important;
+        max-width: 160px !important;
+    }
 }
 
 /* ============================================================
@@ -328,63 +589,6 @@ body {
     font-weight: 600;
     color: var(--color-ink);
     letter-spacing: -0.01em;
-}
-
-/* ============================================================
-   STAT CARDS
-   ============================================================ */
-.stat-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 20px;
-}
-
-.stat-card {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-top: none; /* overridden per-card via inline style */
-    border-radius: 8px;
-    padding: 18px 16px 16px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 1px 2px 0 oklch(0 0 0 / 0.04);
-}
-
-.stat-card-header {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--color-border-subtle);
-    background: var(--color-surface-2);
-    border-radius: 8px 8px 0 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.stat-icon-wrapper {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-subtle);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-ink-2);
-}
-
-.stat-value {
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--color-ink);
-    letter-spacing: -0.03em;
-    line-height: 1;
-    margin-bottom: 4px;
-}
-
-.stat-label {
-    font-size: 12px;
-    color: var(--color-ink-3);
-    font-weight: 400;
 }
 
 /* ============================================================
@@ -570,11 +774,9 @@ table.data-table thead tr {
 table.data-table thead th {
     padding: 11px 16px;
     text-align: left;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--color-ink-4);
+    color: var(--color-ink-3);
     white-space: nowrap;
     background: var(--color-surface-2);
 }
@@ -607,7 +809,7 @@ table.data-table tbody td.td-primary {
 /* Extra left spacing for columns that sit right of a right-aligned numeric column */
 table.data-table thead th.th-gap,
 table.data-table tbody td.td-gap {
-    padding-left: 28px;
+    padding-left: 28px !important;
 }
 
 /* ============================================================
@@ -662,16 +864,14 @@ table.data-table tbody td.td-gap {
 
 .pos-toolbar-kicker {
     font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-weight: 500;
     color: var(--color-ink-4);
 }
 
 .pos-toolbar-title {
     font-size: 18px;
     font-weight: 700;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     color: var(--color-ink);
 }
 
@@ -738,24 +938,30 @@ table.data-table tbody td.td-gap {
     border-radius: 8px;
     padding: 12px;
     cursor: pointer;
-    transition: border-color 120ms ease, background 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+    transition: border-color 150ms ease;
     user-select: none;
     box-shadow: 0 1px 2px 0 oklch(0 0 0 / 0.05);
 }
 
 .pos-product-card:hover {
-    border-color: var(--color-amber-border);
-    background: var(--color-surface-2);
-    transform: translateY(-1px);
+    border-color: oklch(0.30 0.10 148 / 0.4);
 }
 
 .pos-product-card:active {
-    transform: translateY(0);
+    border-color: var(--color-amber);
 }
 
 .pos-product-card:focus-visible {
-    outline: 3px solid var(--color-amber);
+    outline: 2px solid var(--color-amber);
     outline-offset: 2px;
+}
+
+/* Low-stock warning state */
+.pos-product-card--low {
+    border-color: oklch(0.50 0.18 25 / 0.3);
+}
+.pos-product-card--low:hover {
+    border-color: oklch(0.50 0.18 25 / 0.55);
 }
 
 .pos-product-thumb {
@@ -778,12 +984,14 @@ table.data-table tbody td.td-gap {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 8px;
-    overflow: hidden;
+    overflow: hidden; /* keeps border-radius clipping */
     box-shadow: 0 1px 2px 0 oklch(0 0 0 / 0.05);
     position: sticky;
     top: 12px;
     max-height: calc(100vh - 88px);
 }
+
+/* Scrollable payment footer so nothing gets clipped */
 
 .pos-cart-meta {
     display: flex;
@@ -814,10 +1022,8 @@ table.data-table tbody td.td-gap {
 
 .pos-cart-total-label {
     font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--color-ink-4);
+    font-weight: 600;
+    color: var(--color-ink-3);
     margin-bottom: 4px;
 }
 
@@ -825,7 +1031,7 @@ table.data-table tbody td.td-gap {
     font-family: var(--font-mono);
     font-size: 20px;
     font-weight: 700;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     color: var(--color-amber);
 }
 
@@ -855,9 +1061,66 @@ table.data-table tbody td.td-gap {
 
 .pos-cart-item:hover { background: var(--color-surface-2); }
 
+/* Qty stepper buttons — larger hit area */
+.pos-cart-item .qty-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-ink-2);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 100ms, border-color 100ms, color 100ms;
+    flex-shrink: 0;
+    user-select: none;
+}
+.pos-cart-item .qty-btn:hover {
+    background: var(--color-surface-2);
+    border-color: var(--color-amber-border);
+    color: var(--color-amber);
+}
+.pos-cart-item .qty-btn:active { transform: scale(0.92); }
+.pos-cart-item .qty-btn--minus:hover {
+    border-color: oklch(0.50 0.18 25 / 0.5);
+    color: var(--color-danger);
+}
+
+/* Product card — in-cart selected state: thicker border only, no tinted bg */
+.pos-product-card--selected {
+    border: 2px solid var(--color-amber);
+    padding: 11px; /* compensate 1px extra border so content doesn't shift */
+}
+.pos-product-card--selected:hover {
+    border-color: var(--color-amber-dim);
+}
+
+/* Diskon mode toggle buttons (Rp / %) */
+.pos-diskon-mode-btn {
+    background: var(--color-surface);
+    color: var(--color-ink-3);
+    font-family: var(--font-sans);
+    line-height: 1;
+}
+.pos-diskon-mode-btn--active {
+    background: var(--color-ink);
+    color: var(--color-surface);
+}
+.pos-diskon-mode-btn:hover:not(.pos-diskon-mode-btn--active) {
+    background: var(--color-surface-2);
+    color: var(--color-ink-2);
+}
+
 .pos-cart-footer {
     border-top: 1px solid var(--color-border);
     padding: 12px 14px;
+    overflow-y: auto;
+    scrollbar-width: none;
 }
 
 .pos-scan-note {
@@ -887,7 +1150,7 @@ table.data-table tbody td.td-gap {
 .page-intro-title {
     font-size: 18px;
     font-weight: 700;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     color: var(--color-ink);
 }
 
@@ -949,32 +1212,33 @@ table.data-table tbody td.td-gap {
 }
 
 .metric-card {
-    padding: 14px 16px;
+    padding: 16px;
     border: 1px solid var(--color-border);
-    border-radius: 10px;
-    background: linear-gradient(180deg, var(--color-surface), var(--color-surface-2));
+    border-radius: 8px;
+    background: var(--color-surface);
 }
 
 .metric-label {
     font-size: 12px;
     color: var(--color-ink-3);
     font-weight: 500;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 
 .metric-value {
     font-family: var(--font-mono);
-    font-size: 22px;
+    font-size: 20px;
     line-height: 1;
     font-weight: 700;
     color: var(--color-ink);
-    letter-spacing: -0.03em;
+    letter-spacing: -0.025em;
 }
 
 .metric-note {
-    font-size: 11.5px;
+    font-size: 12px;
     color: var(--color-ink-4);
     margin-top: 6px;
+    line-height: 1.4;
 }
 
 .empty-state {
@@ -1008,8 +1272,7 @@ table.data-table tbody td.td-gap {
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: oklch(0 0 0 / 0.3);
-    backdrop-filter: blur(2px);
+    background: oklch(0 0 0 / 0.4);
     z-index: 50;
     display: flex;
     align-items: center;
@@ -1049,38 +1312,32 @@ table.data-table tbody td.td-gap {
     display: flex;
     align-items: center;
     justify-content: center;
-    background:
-        radial-gradient(circle at top left, oklch(0.96 0.13 92 / 0.92) 0%, transparent 42%),
-        radial-gradient(circle at bottom right, oklch(0.90 0.12 88 / 0.72) 0%, transparent 38%),
-        linear-gradient(180deg, oklch(0.95 0.12 92), oklch(0.88 0.13 86));
+    background: var(--color-surface-2);
     position: relative;
     overflow: hidden;
     padding: 24px;
 }
 
+/* Subtle background texture */
 .login-page::before {
     content: '';
     position: absolute;
     inset: 0;
-    background:
-        radial-gradient(circle at 20% 20%, oklch(1 0 0 / 0.28), transparent 30%),
-        radial-gradient(circle at 80% 18%, oklch(0.78 0.15 88 / 0.22), transparent 24%);
+    background: radial-gradient(ellipse 70% 50% at 50% -10%, oklch(0.30 0.10 148 / 0.06), transparent 60%);
     pointer-events: none;
 }
 
 .login-card {
-    background: linear-gradient(180deg, #05371a, #042d15);
-    border: 1px solid oklch(1 0 0 / 0.12);
-    color: #ffffff;
-    border-radius: 10px;
-    padding: 32px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-ink);
+    border-radius: 12px;
+    padding: 36px 32px;
     width: 100%;
     max-width: 380px;
     position: relative;
     z-index: 1;
-    box-shadow:
-        0 18px 30px -16px rgb(5 55 26 / 0.55),
-        0 8px 16px -10px rgb(5 55 26 / 0.35);
+    box-shadow: 0 4px 24px -4px oklch(0 0 0 / 0.08), 0 1px 4px -1px oklch(0 0 0 / 0.06);
 }
 
 .login-brand {
@@ -1091,10 +1348,10 @@ table.data-table tbody td.td-gap {
 }
 
 .login-title {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
-    color: #ffffff;
-    margin-bottom: 18px;
+    color: var(--color-ink-2);
+    margin-bottom: 20px;
     letter-spacing: -0.01em;
 }
 
@@ -1112,7 +1369,7 @@ table.data-table tbody td.td-gap {
 }
 
 .login-remember input {
-    accent-color: oklch(0.84 0.14 90);
+    accent-color: var(--color-amber);
     width: 13px;
     height: 13px;
     cursor: pointer;
@@ -1120,7 +1377,7 @@ table.data-table tbody td.td-gap {
 
 .login-remember label {
     font-size: 12px;
-    color: #ffffff;
+    color: var(--color-ink-3);
     cursor: pointer;
 }
 
@@ -1129,7 +1386,7 @@ table.data-table tbody td.td-gap {
     justify-content: space-between;
     gap: 12px;
     font-size: 11px;
-    color: oklch(1 0 0 / 0.74);
+    color: var(--color-ink-4);
 }
 
 /* ============================================================
@@ -1137,47 +1394,17 @@ table.data-table tbody td.td-gap {
    ============================================================ */
 .divider {
     border: none;
-    border-top: 1px solid oklch(1 0 0 / 0.14);
+    border-top: 1px solid var(--color-border);
     margin: 14px 0;
 }
 
-.login-card .form-label {
-    color: oklch(1 0 0 / 0.88);
-}
-
-.login-card .form-input,
-.login-card input.form-input {
-    background: oklch(1 0 0 / 0.08);
-    border-color: oklch(1 0 0 / 0.18);
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    caret-color: #ffffff !important;
-}
-
-.login-card .form-input::placeholder {
-    color: oklch(1 0 0 / 0.62) !important;
-}
-
-.login-card .form-input:-webkit-autofill,
-.login-card .form-input:-webkit-autofill:hover,
-.login-card .form-input:-webkit-autofill:focus {
-    -webkit-text-fill-color: #ffffff !important;
-    caret-color: #ffffff !important;
-    box-shadow: 0 0 0 1000px rgb(5 55 26 / 0.98) inset;
-    transition: background-color 9999s ease-in-out 0s;
-}
-
-.login-card .form-input:focus {
-    border-color: oklch(0.84 0.14 90);
-}
-
 .login-card .btn-primary {
-    background: linear-gradient(180deg, oklch(0.84 0.14 90), oklch(0.77 0.13 90));
-    color: #05371a;
+    background: var(--color-amber);
+    color: #ffffff;
 }
 
 .login-card .btn-primary:hover {
-    background: linear-gradient(180deg, oklch(0.88 0.14 90), oklch(0.80 0.14 90));
+    background: var(--color-amber-dim);
 }
 
 /* ============================================================
@@ -1216,13 +1443,50 @@ nav[role="navigation"] span[aria-current] { background: var(--color-amber-glow);
         position: fixed;
         left: 0; top: 0; bottom: 0;
         z-index: 30;
+        /* full drawer width — no icon-only on mobile */
+        width: 260px !important;
         transform: translateX(-100%);
+        /* use transform for the slide, not width */
+        transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .sidebar.open { transform: translateX(0); }
+
+    /* kill the hover-expand on mobile — drawer is all-or-nothing */
+    .sidebar:hover { width: 260px !important; }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    /* when drawer is open, force all text/labels visible
+       (overrides the opacity:0 / max-width:0 desktop rules) */
+    .sidebar.open .nav-label {
+        opacity: 1 !important;
+        max-width: 160px !important;
+        margin-left: 10px !important;
+    }
+    .sidebar.open .sidebar-section-label {
+        opacity: 1 !important;
+        height: 28px !important;
+        margin-top: 18px !important;
+    }
+    .sidebar.open .sidebar-user-info {
+        opacity: 1 !important;
+        max-width: 140px !important;
+        margin-left: 10px !important;
+    }
+    .sidebar.open .sidebar-logo-text {
+        opacity: 1 !important;
+        max-width: 160px !important;
+    }
+
     .sidebar-overlay {
         position: fixed; inset: 0;
         background: oklch(0 0 0 / 0.5);
         z-index: 29;
+        transition: opacity 200ms ease;
+    }
+    .sidebar-overlay.hidden {
+        pointer-events: none;
     }
 }
 
@@ -1245,8 +1509,10 @@ nav[role="navigation"] span[aria-current] { background: var(--color-amber-glow);
     .filter-bar .form-select,
     .filter-bar .btn { width: 100% !important; }
 
-    .table-wrap { margin-inline: 0; }
-    table.data-table { min-width: 620px; }
+    .table-wrap { margin-inline: 0; overflow-x: visible; }
+    /* No min-width — DataTables Responsive hides columns instead of forcing scroll */
+    .dt-container { width: 100% !important; }
+    table.data-table { width: 100% !important; }
     .page-intro-title { font-size: 16px; }
     .metric-grid { grid-template-columns: 1fr; }
 
@@ -1350,4 +1616,349 @@ nav[role="navigation"] span[aria-current] { background: var(--color-amber-glow);
     background: var(--color-surface);
     border-color: var(--color-border);
     border-bottom-color: var(--color-surface);
+}
+
+/* ============================================================
+   DATATABLES — theme to match design system
+   ============================================================ */
+
+/* ── Wrapper layout ─────────────────────────────────────────── */
+.dt-container {
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    color: var(--color-ink-2);
+}
+
+/* Top bar: search on left, length on right */
+.dt-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-border);
+    flex-wrap: wrap;
+}
+
+/* Bottom bar: info on left, pagination on right */
+.dt-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--color-border-subtle);
+    flex-wrap: wrap;
+}
+
+/* ── Search input ───────────────────────────────────────────── */
+.dt-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dt-search label {
+    display: none; /* hide "Search:" label, placeholder does the job */
+}
+
+.dt-search input {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+    color: var(--color-ink);
+    outline: none;
+    transition: border-color 120ms ease;
+    font-family: var(--font-sans);
+    width: 200px;
+}
+
+.dt-search input:focus {
+    border-color: var(--color-amber);
+}
+
+.dt-search input::placeholder {
+    color: var(--color-ink-4);
+}
+
+/* ── Length menu ────────────────────────────────────────────── */
+.dt-length {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--color-ink-3);
+}
+
+.dt-length label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.dt-length select {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 4px 28px 4px 8px;
+    font-size: 12.5px;
+    color: var(--color-ink-2);
+    font-family: var(--font-sans);
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23706f6c' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+    transition: border-color 120ms;
+}
+
+.dt-length select:focus {
+    border-color: var(--color-amber);
+}
+
+/* ── Info text ──────────────────────────────────────────────── */
+.dt-info {
+    font-size: 12px;
+    color: var(--color-ink-4);
+    white-space: nowrap;
+}
+
+/* ── Pagination ─────────────────────────────────────────────── */
+.dt-paging {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.dt-paging .dt-paging-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-ink-3);
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: background 100ms, color 100ms;
+    font-family: var(--font-sans);
+    text-decoration: none;
+    line-height: 1;
+}
+
+.dt-paging .dt-paging-button:hover:not(.disabled):not(.current) {
+    background: var(--color-surface-2);
+    color: var(--color-ink);
+}
+
+.dt-paging .dt-paging-button.current {
+    background: var(--color-amber-glow);
+    border-color: var(--color-amber-border);
+    color: var(--color-amber);
+    font-weight: 600;
+    cursor: default;
+}
+
+.dt-paging .dt-paging-button.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* ── Sort arrows ────────────────────────────────────────────── */
+table.data-table thead th.dt-orderable-asc,
+table.data-table thead th.dt-orderable-desc,
+table.data-table thead th.dt-ordering-asc,
+table.data-table thead th.dt-ordering-desc {
+    cursor: pointer;
+    user-select: none;
+    padding-right: 20px;
+    position: relative;
+}
+
+table.data-table thead th.dt-orderable-asc::after,
+table.data-table thead th.dt-orderable-desc::after {
+    content: '↕';
+    position: absolute;
+    right: 6px;
+    opacity: 0.3;
+    font-size: 10px;
+}
+
+table.data-table thead th.dt-ordering-asc::after {
+    content: '↑';
+    position: absolute;
+    right: 6px;
+    opacity: 0.75;
+    font-size: 10px;
+    color: var(--color-amber);
+}
+
+table.data-table thead th.dt-ordering-desc::after {
+    content: '↓';
+    position: absolute;
+    right: 6px;
+    opacity: 0.75;
+    font-size: 10px;
+    color: var(--color-amber);
+}
+
+/* Collapsed rows with hidden data — signal clickability */
+table.data-table tbody tr.dt-hasChild {
+    cursor: pointer;
+    background: oklch(0.97 0.015 148) !important;
+}
+table.data-table tbody tr.dt-hasChild td:first-child {
+    border-left: 3px solid var(--color-amber);
+}
+
+/* ── Responsive: dtr-column type — override DT's default arrow with circle button ── */
+
+/* Control column header — no border, small width */
+table.dataTable.dtr-column > thead > tr > th.dtr-control,
+table.dataTable.dtr-column > thead > tr > td.dtr-control {
+    width: 40px;
+    min-width: 40px;
+    padding: 0 !important;
+    text-align: center;
+}
+
+/* Control td — always visible even when collapsed, shows + circle */
+table.dataTable.dtr-column > tbody > tr > td.dtr-control,
+table.dataTable.dtr-column > tbody > tr > th.dtr-control {
+    cursor: pointer;
+    text-align: center;
+    vertical-align: middle;
+    width: 40px;
+    min-width: 40px;
+}
+
+/* Override DT's default arrow ::before with our branded circle */
+table.dataTable.dtr-column > tbody > tr > td.dtr-control::before,
+table.dataTable.dtr-column > tbody > tr > th.dtr-control::before {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--color-amber) !important;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1;
+    /* Override DT's border-based arrow — use text content */
+    border: none !important;
+    content: "+" !important;
+    box-sizing: border-box;
+    vertical-align: middle;
+}
+
+/* Expanded state — minus sign, red */
+table.dataTable.dtr-column > tbody > tr.dtr-expanded > td.dtr-control::before,
+table.dataTable.dtr-column > tbody > tr.dtr-expanded > th.dtr-control::before {
+    background: var(--color-danger) !important;
+    content: "−" !important;
+    border: none !important;
+}
+
+/* ── Child row detail block ─────────────────────────────────── */
+table.dataTable > tbody > tr.child {
+    background: oklch(0.975 0.01 148) !important;
+    cursor: default;
+}
+
+table.dataTable > tbody > tr.child > td {
+    border-top: none !important;
+}
+
+table.dataTable > tbody > tr.child td.child {
+    padding: 10px 16px 14px 20px !important;
+    border-top: none !important;
+}
+
+/* Style the DT-rendered detail list */
+table.dataTable > tbody > tr.child ul.dtr-details {
+    display: flex !important;
+    flex-direction: column;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+table.dataTable > tbody > tr.child ul.dtr-details > li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--color-border-subtle) !important;
+}
+
+table.dataTable > tbody > tr.child ul.dtr-details > li:last-child {
+    border-bottom: none !important;
+    padding-bottom: 0;
+}
+
+table.dataTable > tbody > tr.child ul.dtr-details > li span.dtr-title {
+    color: var(--color-ink-3);
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 90px;
+}
+
+table.dataTable > tbody > tr.child ul.dtr-details > li span.dtr-data {
+    color: var(--color-ink-2);
+    text-align: right;
+    font-size: 13px;
+    word-break: break-word;
+}
+
+/* ── Empty state ────────────────────────────────────────────── */
+table.data-table.no-footer {
+    border-bottom: none;
+}
+
+td.dataTables_empty {
+    text-align: center;
+    padding: 44px 20px !important;
+    color: var(--color-ink-4);
+    font-size: 13px;
+}
+
+/* ── Mobile: collapse search+length to full-width stacks ───── */
+@media (max-width: 640px) {
+    .dt-top,
+    .dt-bottom {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .dt-search input {
+        width: 100%;
+    }
+
+    .dt-paging {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .dt-info {
+        text-align: center;
+    }
+
+    .dt-length label {
+        justify-content: space-between;
+    }
 }

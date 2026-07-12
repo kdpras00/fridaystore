@@ -18,7 +18,7 @@
         /* Screen styles */
         body {
             font-family: 'Poppins', sans-serif;
-            background: #f5f3ed;
+            background: oklch(0.97 0 0);
             color: var(--ink);
             display: flex;
             align-items: flex-start;
@@ -153,8 +153,8 @@
 
         {{-- Actions (screen only) --}}
         <div class="btn-actions no-print">
-            <button class="btn btn-back" onclick="window.close()">← Tutup</button>
-            <button class="btn btn-print" onclick="window.print()">🖨 Cetak Struk</button>
+            <button class="btn btn-back" onclick="window.close()">&#8592; Tutup</button>
+            <button class="btn btn-print" onclick="window.print()">Cetak Struk</button>
         </div>
     </div>
 </body>

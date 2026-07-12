@@ -26,7 +26,7 @@ class ProdukController extends Controller
             $query->where('kategori_id', $request->kategori_id);
         }
 
-        $produk   = $query->orderBy('nama')->paginate(15)->withQueryString();
+        $produk   = $query->orderBy('nama')->get();
         $kategori = KategoriProduk::orderBy('nama')->get();
 
         return view('produk.index', compact('produk', 'kategori'));

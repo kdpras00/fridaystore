@@ -11,33 +11,38 @@ class LaporanController extends Controller
 {
     public function index(Request $request)
     {
+        // Default to current month when no date filter provided
+        $dari   = $request->filled('dari')   ? $request->dari   : now()->startOfMonth()->toDateString();
+        $sampai = $request->filled('sampai') ? $request->sampai : now()->toDateString();
+
         $query = Transaksi::with('kasir')
-            ->when($request->filled('dari'), fn($q) => $q->whereDate('created_at', '>=', $request->dari))
-            ->when($request->filled('sampai'), fn($q) => $q->whereDate('created_at', '<=', $request->sampai))
+            ->whereDate('created_at', '>=', $dari)
+            ->whereDate('created_at', '<=', $sampai)
             ->when($request->filled('kasir_id'), fn($q) => $q->where('kasir_id', $request->kasir_id));
 
         $grandTotal = (clone $query)->sum('total_bayar');
-        $transaksi  = $query->orderByDesc('created_at')->paginate(20)->withQueryString();
+        $transaksi  = $query->orderByDesc('created_at')->get();
         $kasirList  = User::role('kasir')->orderBy('name')->get();
 
-        return view('laporan.index', compact('transaksi', 'grandTotal', 'kasirList'));
+        return view('laporan.index', compact('transaksi', 'grandTotal', 'kasirList', 'dari', 'sampai'));
     }
 
     public function produk(Request $request)
     {
+        $dari   = $request->filled('dari')   ? $request->dari   : now()->startOfMonth()->toDateString();
+        $sampai = $request->filled('sampai') ? $request->sampai : now()->toDateString();
+
         $produkLaris = TransaksiDetail::selectRaw('produk_id, nama_produk, SUM(qty) as total_qty, SUM(subtotal) as total_revenue')
-            ->when($request->filled('dari'), function ($q) use ($request) {
-                $q->whereHas('transaksi', fn($tq) => $tq->whereDate('created_at', '>=', $request->dari));
-            })
-            ->when($request->filled('sampai'), function ($q) use ($request) {
-                $q->whereHas('transaksi', fn($tq) => $tq->whereDate('created_at', '<=', $request->sampai));
-            })
+            ->whereHas('transaksi', fn($tq) => $tq->whereDate('created_at', '>=', $dari)->whereDate('created_at', '<=', $sampai))
             ->groupBy('produk_id', 'nama_produk')
             ->orderByDesc('total_qty')
-            ->paginate(20)
-            ->withQueryString();
+            ->get();
 
-        return view('laporan.produk', compact('produkLaris'));
+        $grandTotalQty     = $produkLaris->sum('total_qty');
+        $grandTotalRevenue = $produkLaris->sum('total_revenue');
+        $topProduk         = $produkLaris->first();
+
+        return view('laporan.produk', compact('produkLaris', 'grandTotalQty', 'grandTotalRevenue', 'topProduk', 'dari', 'sampai'));
     }
 
     public function kasir(Request $request)
