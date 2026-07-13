@@ -20,6 +20,8 @@
 /bootstrap/cache/*.php
 /database/database.sqlite
 /node_modules
+/tests
+phpunit.xml
 /public/build
 /public/fonts-manifest.dev.json
 /public/hot
