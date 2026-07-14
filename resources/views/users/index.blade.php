@@ -17,6 +17,7 @@
         <table id="tbl-users" class="data-table" style="width:100%">
             <thead><tr>
                 <th>Nama</th>
+                <th>Username</th>
                 <th>Email</th>
                 <th>Role</th>
                 <th>Status</th>
@@ -32,6 +33,7 @@
                     <span style="font-size:12px;color:var(--color-ink-4);font-weight:400;margin-left:4px;">(Anda)</span>
                     @endif
                 </td>
+                <td style="font-family:var(--font-mono);font-size:12.5px;color:var(--color-ink-3);">{{ $u->username }}</td>
                 <td style="font-family:var(--font-mono);font-size:12.5px;color:var(--color-ink-3);">{{ $u->email }}</td>
                 <td style="font-size:13.5px;color:var(--color-ink-2);">{{ ucfirst($u->getRoleNames()->first() ?? '-') }}</td>
                 <td data-order="{{ $u->is_active ? 1 : 0 }}">
@@ -68,10 +70,10 @@
         order: [[0, 'asc']],
         columnDefs: [
             { className: 'dtr-control', orderable: false, targets: -1 },
-            { orderable: false, targets: [4] },
+            { orderable: false, targets: [5] },
             { responsivePriority: 1, targets: 0 },
-            { responsivePriority: 2, targets: 3 },
-            { responsivePriority: 10, targets: [1, 2, 4] },
+            { responsivePriority: 2, targets: 4 },
+            { responsivePriority: 10, targets: [1, 2, 3, 5] },
         ],
     }",
 ])

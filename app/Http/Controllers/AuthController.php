@@ -18,14 +18,14 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email'    => ['required', 'email'],
+            'username' => ['required', 'string'],
             'password' => ['required'],
         ]);
 
-        $user = \App\Models\User::where('email', $credentials['email'])->first();
+        $user = \App\Models\User::where('username', $credentials['username'])->first();
 
         if ($user && !$user->is_active) {
-            return back()->withErrors(['email' => 'Akun Anda dinonaktifkan. Hubungi administrator.'])->onlyInput('email');
+            return back()->withErrors(['username' => 'Akun Anda dinonaktifkan. Hubungi administrator.'])->onlyInput('username');
         }
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
@@ -33,7 +33,7 @@ class AuthController extends Controller
             return redirect()->intended(route('dashboard'));
         }
 
-        return back()->withErrors(['email' => 'Email atau password salah.'])->onlyInput('email');
+        return back()->withErrors(['username' => 'Username atau password salah.'])->onlyInput('username');
     }
 
     public function logout(Request $request)

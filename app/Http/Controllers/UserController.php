@@ -24,6 +24,7 @@ class UserController extends Controller
     {
         $request->validate([
             'name'     => ['required', 'string', 'max:100'],
+            'username' => ['required', 'string', 'max:50', 'unique:users,username'],
             'email'    => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role'     => ['required', Rule::in(['admin', 'kasir', 'owner'])],
@@ -31,6 +32,7 @@ class UserController extends Controller
 
         $user = User::create([
             'name'      => $request->name,
+            'username'  => $request->username,
             'email'     => $request->email,
             'password'  => Hash::make($request->password),
             'is_active' => true,
@@ -50,6 +52,7 @@ class UserController extends Controller
     {
         $request->validate([
             'name'     => ['required', 'string', 'max:100'],
+            'username' => ['required', 'string', 'max:50', Rule::unique('users')->ignore($user->id)],
             'email'    => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'role'     => ['required', Rule::in(['admin', 'kasir', 'owner'])],
@@ -63,7 +66,7 @@ class UserController extends Controller
             return back()->withInput()->with('swal_error', 'Minimal harus ada satu admin aktif di sistem.');
         }
 
-        $data = ['name' => $request->name, 'email' => $request->email];
+        $data = ['name' => $request->name, 'username' => $request->username, 'email' => $request->email];
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }

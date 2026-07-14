@@ -19,7 +19,6 @@
 <div class="tab-list">
     <a href="{{ route('laporan.index') }}" class="tab-item {{ request()->routeIs('laporan.index') ? 'active' : '' }}">Penjualan</a>
     <a href="{{ route('laporan.produk') }}" class="tab-item {{ request()->routeIs('laporan.produk') ? 'active' : '' }}">Per Produk</a>
-    <a href="{{ route('laporan.kasir') }}" class="tab-item {{ request()->routeIs('laporan.kasir') ? 'active' : '' }}">Per Kasir</a>
 </div>
 
 <div class="card filter-card">
@@ -55,14 +54,14 @@
         <div class="metric-note">Jumlah transaksi dalam filter aktif</div>
     </div>
     <div class="metric-card">
-        <div class="metric-label">Total Pendapatan</div>
+        <div class="metric-label">Total Pendapatan (Omzet)</div>
         <div class="metric-value">Rp {{ number_format($grandTotal, 0, ',', '.') }}</div>
-        <div class="metric-note">Pendapatan bersih dari transaksi terpilih</div>
+        <div class="metric-note">Total bayar dari pembeli</div>
     </div>
     <div class="metric-card">
-        <div class="metric-label">Rata-rata Per Transaksi</div>
-        <div class="metric-value">Rp {{ number_format($avgTicket, 0, ',', '.') }}</div>
-        <div class="metric-note">Ticket size periode ini</div>
+        <div class="metric-label">Keuntungan Bersih (Profit)</div>
+        <div class="metric-value">Rp {{ number_format($totalProfit, 0, ',', '.') }}</div>
+        <div class="metric-note">Omzet − PPN − Modal</div>
     </div>
 </div>
 
@@ -76,6 +75,7 @@
                 <th style="text-align:right;">Subtotal</th>
                 <th style="text-align:right;">Diskon</th>
                 <th style="text-align:right;">Total Bayar</th>
+                <th style="text-align:right;">Profit</th>
                 <th class="dt-no-export" style="text-align:right;">Aksi</th>
                 <th></th>
             </tr></thead>
@@ -100,6 +100,10 @@
                     data-order="{{ $t->total_bayar }}">
                     Rp {{ number_format($t->total_bayar, 0, ',', '.') }}
                 </td>
+                <td style="text-align:right;font-family:var(--font-mono);font-weight:600;color:{{ $t->profit > 0 ? 'var(--color-success)' : 'var(--color-ink)' }};"
+                    data-order="{{ $t->profit }}">
+                    Rp {{ number_format($t->profit, 0, ',', '.') }}
+                </td>
                 <td class="dt-no-export" style="text-align:right;">
                     <a href="{{ route('kasir.struk', $t) }}" target="_blank" class="btn btn-ghost btn-sm">Struk</a>
                 </td>
@@ -120,14 +124,15 @@
         order: [[1, 'desc']],
         columnDefs: [
             { className: 'dtr-control', orderable: false, targets: -1 },
-            { orderable: false, targets: [6] },
+            { orderable: false, targets: [7] },
             { responsivePriority: 1, targets: 0 },
-            { responsivePriority: 2, targets: 5 },
-            { responsivePriority: 3, targets: 1 },
-            { responsivePriority: 10, targets: [2, 3, 4, 6] },
+            { responsivePriority: 2, targets: 6 },
+            { responsivePriority: 3, targets: 5 },
+            { responsivePriority: 4, targets: 1 },
+            { responsivePriority: 10, targets: [2, 3, 4, 7] },
         ],
         buttons: window.DT_EXPORT_BUTTONS,
-        language: { emptyTable: 'Tidak ada transaksi pada periode ini' },
+        language: { emptyTable: '<div style=\'text-align: center;\'>Tidak ada transaksi pada periode ini</div>' },
     }",
     'extra' => "
         var btnCsv   = document.getElementById('btn-export-csv');

@@ -100,7 +100,7 @@
             { responsivePriority: 10, targets: [2, 3, 5] },
         ],
         buttons: window.DT_EXPORT_BUTTONS,
-        language: { emptyTable: 'Belum ada transaksi pada periode ini' },
+        language: { emptyTable: '<div style=\'text-align: center;\'>Belum ada transaksi pada periode ini</div>' },
     }",
     'extra' => "
         var btnCsv = document.getElementById('btn-export-csv');

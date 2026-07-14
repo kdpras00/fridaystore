@@ -13,7 +13,6 @@
 <div class="tab-list">
     <a href="{{ route('laporan.index') }}" class="tab-item {{ request()->routeIs('laporan.index') ? 'active' : '' }}">Penjualan</a>
     <a href="{{ route('laporan.produk') }}" class="tab-item {{ request()->routeIs('laporan.produk') ? 'active' : '' }}">Per Produk</a>
-    <a href="{{ route('laporan.kasir') }}" class="tab-item {{ request()->routeIs('laporan.kasir') ? 'active' : '' }}">Per Kasir</a>
 </div>
 
 <div class="card filter-card">
@@ -45,26 +44,32 @@
         <div class="metric-note">Seluruh unit pada periode aktif</div>
     </div>
     <div class="metric-card">
-        <div class="metric-label">Omzet Produk</div>
-        <div class="metric-value">Rp {{ number_format($grandTotalRevenue, 0, ',', '.') }}</div>
-        <div class="metric-note">Total pendapatan dari produk</div>
+        <div class="metric-label">Item Tersedia</div>
+        <div class="metric-value">{{ $produkLaris->count() }}</div>
+        <div class="metric-note">Macam produk terjual</div>
     </div>
 </div>
 
 <div class="card table-card">
+    <div style="padding:16px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--color-border); flex-wrap:wrap; gap:12px;">
+        <h3 style="font-size:15px; font-weight:600; color:var(--color-ink); margin:0;">Rincian Penjualan</h3>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <span style="font-size:12.5px; color:var(--color-ink-3);">Urutkan:</span>
+            <button type="button" id="btn-sort-desc" class="btn btn-ghost btn-sm" style="font-size:12px; padding:4px 10px;">Paling Laku</button>
+            <button type="button" id="btn-sort-asc" class="btn btn-ghost btn-sm" style="font-size:12px; padding:4px 10px;">Kurang Laku</button>
+        </div>
+    </div>
     <div class="table-wrap">
         <table id="tbl-produk-laporan" class="data-table" style="width:100%">
             <thead><tr>
                 <th style="width:44px;">#</th>
                 <th>Nama Produk</th>
                 <th style="text-align:right;">Unit Terjual</th>
-                <th style="text-align:right;">Total Revenue</th>
-                <th style="text-align:right;">% Revenue</th>
+                <th style="text-align:right;">Stok Tersisa</th>
                 <th></th>
             </tr></thead>
             <tbody>
             @forelse($produkLaris as $i => $p)
-            @php($pct = $grandTotalRevenue > 0 ? round(($p->total_revenue / $grandTotalRevenue) * 100, 1) : 0)
             <tr>
                 <td style="color:var(--color-ink-4);font-family:var(--font-mono);">{{ $i + 1 }}</td>
                 <td style="font-weight:500;color:var(--color-ink);">{{ $p->nama_produk }}</td>
@@ -72,17 +77,9 @@
                     data-order="{{ $p->total_qty }}">
                     {{ number_format($p->total_qty) }}
                 </td>
-                <td style="text-align:right;font-family:var(--font-mono);font-weight:600;color:var(--color-amber);"
-                    data-order="{{ $p->total_revenue }}">
-                    Rp {{ number_format($p->total_revenue, 0, ',', '.') }}
-                </td>
-                <td style="text-align:right;" data-order="{{ $pct }}">
-                    <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;">
-                        <div style="width:48px;height:4px;border-radius:2px;background:var(--color-border);overflow:hidden;flex-shrink:0;">
-                            <div style="height:100%;width:{{ $pct }}%;background:var(--color-amber);border-radius:2px;"></div>
-                        </div>
-                        <span style="font-size:12px;font-family:var(--font-mono);color:var(--color-ink-3);min-width:32px;">{{ $pct }}%</span>
-                    </div>
+                <td style="text-align:right;font-family:var(--font-mono);font-weight:600;color:{{ ($p->produk->stok ?? 0) <= 5 ? 'var(--color-danger)' : 'var(--color-ink-3)' }};"
+                    data-order="{{ $p->produk->stok ?? 0 }}">
+                    {{ number_format($p->produk->stok ?? 0) }}
                 </td>
                 <td></td>
             </tr>
@@ -105,14 +102,20 @@
             { responsivePriority: 1, targets: 1 },
             { responsivePriority: 2, targets: 2 },
             { responsivePriority: 3, targets: 3 },
-            { responsivePriority: 10, targets: [0, 4] },
+            { responsivePriority: 10, targets: [0] },
         ],
         buttons: window.DT_EXPORT_BUTTONS,
-        language: { emptyTable: 'Tidak ada data pada periode ini' },
+        language: { emptyTable: '<div style=\'text-align: center;\'>Tidak ada data pada periode ini</div>' },
     }",
     'extra' => "
         var btnCsv = document.getElementById('btn-export-csv');
         if (btnCsv) btnCsv.onclick = function() { dt.button(0).trigger(); };
+        
+        var btnDesc = document.getElementById('btn-sort-desc');
+        if (btnDesc) btnDesc.onclick = function() { dt.order([2, 'desc']).draw(); };
+        
+        var btnAsc = document.getElementById('btn-sort-asc');
+        if (btnAsc) btnAsc.onclick = function() { dt.order([2, 'asc']).draw(); };
     ",
 ])
 @endpush
