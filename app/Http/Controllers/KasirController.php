@@ -16,7 +16,7 @@ class KasirController extends Controller
 {
     public function index(Request $request)
     {
-        $produk = Produk::with('kategori')
+        $produk = Produk::with(['kategori', 'galeri'])
             ->where('stok', '>', 0)
             ->when($request->filled('search'), function ($q) use ($request) {
                 $q->where(function ($sq) use ($request) {
@@ -70,9 +70,11 @@ class KasirController extends Controller
                 $details[] = [
                     'produk_id'   => $produk->id,
                     'nama_produk' => $produk->nama,
+                    'harga_beli'  => $produk->harga_beli,
                     'harga_jual'  => $produk->harga_jual,
                     'qty'         => $item['qty'],
                     'subtotal'    => $subtotal,
+                    'ppn'         => 0,
                 ];
 
                 $produk->decrement('stok', $item['qty']);
@@ -93,7 +95,24 @@ class KasirController extends Controller
                 return response()->json(['success' => false, 'message' => 'Diskon tidak boleh melebihi subtotal.'], 422);
             }
 
-            $totalBayar = max(0, $totalHarga - $diskon);
+            $dpp = max(0, $totalHarga - $diskon);
+            $totalPpn = (int) round($dpp * 0.11);
+            $totalBayar = $dpp + $totalPpn;
+
+            $sisaPpn = $totalPpn;
+            foreach ($details as $k => &$d) {
+                if ($totalHarga > 0) {
+                    $itemPpn = (int) round($totalPpn * ($d['subtotal'] / $totalHarga));
+                } else {
+                    $itemPpn = 0;
+                }
+                if ($k === count($details) - 1) {
+                    $itemPpn = $sisaPpn;
+                }
+                $d['ppn'] = $itemPpn;
+                $sisaPpn -= $itemPpn;
+            }
+            unset($d);
 
             // Cash-specific validation
             $uangBayar = 0;

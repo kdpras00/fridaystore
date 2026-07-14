@@ -64,7 +64,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin,owner')->group(function () {
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
         Route::get('/laporan/produk', [LaporanController::class, 'produk'])->name('laporan.produk');
-        Route::get('/laporan/kasir', [LaporanController::class, 'kasir'])->name('laporan.kasir');
         Route::get('/laporan/export', [LaporanController::class, 'export'])->name('laporan.export');
     });
 

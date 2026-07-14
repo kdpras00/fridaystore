@@ -48,6 +48,7 @@ class ProdukController extends Controller
             'stok'         => ['required', 'integer', 'min:0'],
             'stok_minimum' => ['required', 'integer', 'min:0'],
             'gambar'       => ['nullable', 'image', 'max:2048'],
+            'galeri.*'     => ['nullable', 'image', 'max:2048'],
         ]);
 
         $data['kode_produk'] = Produk::generateKode($data['kategori_id']);
@@ -56,8 +57,16 @@ class ProdukController extends Controller
             $data['gambar'] = $request->file('gambar')->store('produk', 'public');
         }
 
-        DB::transaction(function () use ($data) {
+        DB::transaction(function () use ($data, $request) {
             $produk = Produk::create($data);
+
+            if ($request->hasFile('galeri')) {
+                foreach ($request->file('galeri') as $file) {
+                    $path = $file->store('produk/galeri', 'public');
+                    $produk->galeri()->create(['path' => $path]);
+                }
+            }
+
             if ($produk->stok > 0) {
                 StokMutasi::create([
                     'produk_id'  => $produk->id,
@@ -74,6 +83,7 @@ class ProdukController extends Controller
 
     public function edit(Produk $produk)
     {
+        $produk->load('galeri');
         $kategori = KategoriProduk::orderBy('nama')->get();
         return view('produk.edit', compact('produk', 'kategori'));
     }
@@ -87,6 +97,7 @@ class ProdukController extends Controller
             'harga_jual'   => ['required', 'numeric', 'min:0'],
             'stok_minimum' => ['required', 'integer', 'min:0'],
             'gambar'       => ['nullable', 'image', 'max:2048'],
+            'galeri.*'     => ['nullable', 'image', 'max:2048'],
         ]);
 
         if ($request->hasFile('gambar')) {
@@ -95,6 +106,22 @@ class ProdukController extends Controller
         }
 
         $produk->update($data);
+
+        if ($request->has('hapus_galeri')) {
+            $galeriToHapus = $produk->galeri()->whereIn('id', $request->hapus_galeri)->get();
+            foreach ($galeriToHapus as $gal) {
+                Storage::disk('public')->delete($gal->path);
+                $gal->delete();
+            }
+        }
+
+        if ($request->hasFile('galeri')) {
+            foreach ($request->file('galeri') as $file) {
+                $path = $file->store('produk/galeri', 'public');
+                $produk->galeri()->create(['path' => $path]);
+            }
+        }
+
         return redirect()->route('produk.index')->with('swal_success', 'Produk berhasil diperbarui.');
     }
 
@@ -104,7 +131,12 @@ class ProdukController extends Controller
             return back()->with('swal_error', 'Produk tidak dapat dihapus karena memiliki riwayat transaksi atau mutasi stok.');
         }
 
+        $produk->load('galeri');
         if ($produk->gambar) Storage::disk('public')->delete($produk->gambar);
+        foreach ($produk->galeri as $galeri) {
+            Storage::disk('public')->delete($galeri->path);
+        }
+        
         $produk->delete();
         return back()->with('swal_success', 'Produk berhasil dihapus.');
     }

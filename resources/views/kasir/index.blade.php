@@ -43,10 +43,17 @@
                              background:var(--color-amber);color:#fff;
                              font-size:10px;font-weight:700;min-width:18px;height:18px;
                              border-radius:999px;align-items:center;justify-content:center;
-                             padding:0 4px;line-height:1;"></span>
-                <div class="pos-product-thumb">
+                             padding:0 4px;line-height:1;z-index:10;"></span>
+                <div class="pos-product-thumb" style="position:relative;overflow:hidden;">
                     @if($p->gambar)
-                    <img src="{{ asset('storage/'.$p->gambar) }}" style="width:100%;height:100%;object-fit:cover;" alt="{{ $p->nama }}">
+                        @if($p->galeri->count() > 0)
+                            <div class="pos-img-hover-wrap" style="width:100%;height:100%;position:relative;">
+                                <img src="{{ asset('storage/'.$p->gambar) }}" class="img-main" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;transition:opacity 0.3s ease;" alt="{{ $p->nama }}">
+                                <img src="{{ asset('storage/'.$p->galeri->first()->path) }}" class="img-hover" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;opacity:0;transition:opacity 0.3s ease;" alt="{{ $p->nama }} (alt)">
+                            </div>
+                        @else
+                            <img src="{{ asset('storage/'.$p->gambar) }}" style="width:100%;height:100%;object-fit:cover;" alt="{{ $p->nama }}">
+                        @endif
                     @else
                     <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="var(--color-ink-4)" stroke-width="1.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
@@ -68,9 +75,6 @@
             <p style="font-size:13px;color:var(--color-ink-4);">Tidak ada produk ditemukan</p>
         </div>
 
-        <div class="pos-scan-note">
-            Tips: gunakan pencarian untuk barcode/kode produk, lalu tekan <strong>Enter</strong> untuk memasukkan item pertama yang cocok.
-        </div>
     </div>
 
     {{-- ── RIGHT: Cart ────────────────────────────────────── --}}
@@ -88,11 +92,6 @@
             </button>
         </div>
 
-        {{-- Total summary --}}
-        <div class="pos-cart-total">
-            <div class="pos-cart-total-label">Total Bayar</div>
-            <div id="display-total" class="pos-cart-total-value">Rp 0</div>
-        </div>
 
         {{-- Items list --}}
         <div id="cart-items" class="pos-cart-items">
@@ -138,7 +137,19 @@
                 <span id="display-diskon" style="font-family:var(--font-mono);color:var(--color-danger);"></span>
             </div>
 
-            <hr style="margin:2px 0;border:none;border-top:1px solid var(--color-border);">
+            {{-- PPN 11% line --}}
+            <div id="ppn-row" style="display:none;justify-content:space-between;align-items:center;font-size:12px;margin-top:4px;">
+                <span style="color:var(--color-ink-4);">PPN 11%</span>
+                <span id="display-ppn" style="font-family:var(--font-mono);color:var(--color-ink-2);"></span>
+            </div>
+
+            <hr style="margin:4px 0;border:none;border-top:1px dashed var(--color-border);">
+
+            {{-- Total Bayar (Pindah ke bawah) --}}
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;margin:4px 0 8px;">
+                <span style="font-size:14px;font-weight:600;color:var(--color-ink);">Total Bayar</span>
+                <span id="display-total" style="font-family:var(--font-mono);font-size:24px;font-weight:700;color:var(--color-amber);letter-spacing:-0.02em;line-height:1;">Rp 0</span>
+            </div>
 
             {{-- Metode Bayar --}}
             <div>
@@ -422,13 +433,20 @@ function diskonNominal() {
     if (_diskonMode === 'persen') return Math.round(sub * Math.min(_diskonRaw, 100) / 100);
     return Math.min(_diskonRaw, sub);
 }
-function total() {
+function dpp() {
     return Math.max(0, subtotal() - diskonNominal());
+}
+function ppn() {
+    return Math.round(dpp() * 0.11);
+}
+function total() {
+    return Math.max(0, dpp() + ppn());
 }
 
 function updateTotal() {
     const sub = subtotal();
     const dis = diskonNominal();
+    const ppnAmount = ppn();
     const tot = total();
 
     document.getElementById('display-subtotal').textContent = fmt(sub);
@@ -441,6 +459,15 @@ function updateTotal() {
         potonganRow.style.display  = 'flex';
     } else {
         potonganRow.style.display  = 'none';
+    }
+
+    const ppnRow = document.getElementById('ppn-row');
+    const ppnEl  = document.getElementById('display-ppn');
+    if (ppnAmount > 0) {
+        ppnEl.textContent      = '+ ' + fmt(ppnAmount);
+        ppnRow.style.display   = 'flex';
+    } else {
+        ppnRow.style.display   = 'none';
     }
 
     buildQuickPay();
@@ -542,6 +569,7 @@ function resetPaymentFields() {
     document.getElementById('kembalian-box').style.display = 'none';
     document.getElementById('sisa-label').style.display    = 'none';
     document.getElementById('potongan-row').style.display  = 'none';
+    document.getElementById('ppn-row').style.display       = 'none';
     setDiskonMode('nominal');
     setPaymentMethod('cash');
 }

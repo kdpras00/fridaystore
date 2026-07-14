@@ -22,6 +22,11 @@
         <div class="metric-note">Pendapatan yang tercatat hari ini</div>
     </div>
     <div class="metric-card">
+        <div class="metric-label">Profit Hari Ini</div>
+        <div class="metric-value">Rp {{ number_format($profitHari, 0, ',', '.') }}</div>
+        <div class="metric-note">Keuntungan bersih hari ini</div>
+    </div>
+    <div class="metric-card">
         <div class="metric-label">Stok Menipis</div>
         <div class="metric-value" style="{{ $stokRendah > 0 ? 'color:var(--color-danger);' : '' }}">{{ number_format($stokRendah) }}</div>
         <div class="metric-note">
@@ -35,14 +40,14 @@
 </div>
 
 {{-- Chart + Side info --}}
-<div class="dashboard-detail-grid" style="display:grid; grid-template-columns:1fr 220px; gap:24px; align-items:start;">
+<div class="dashboard-detail-grid" style="display:grid; grid-template-columns:minmax(0, 1fr) 220px; gap:24px; align-items:start;">
 
-    <div class="card table-card">
+    <div class="card table-card" style="min-width:0;">
         <div class="card-header">
             <p class="card-title">Penjualan 7 Hari Terakhir</p>
         </div>
-        <div style="padding:16px;">
-            <canvas id="chartPenjualan" height="80" role="img" aria-label="Grafik penjualan tujuh hari terakhir"></canvas>
+        <div style="padding:16px; position:relative; width:100%; height:260px;">
+            <canvas id="chartPenjualan" role="img" aria-label="Grafik penjualan tujuh hari terakhir"></canvas>
         </div>
     </div>
 
@@ -51,6 +56,11 @@
             <div class="metric-label">Omzet Bulan Ini</div>
             <div class="metric-value">Rp {{ number_format($omzetBulan, 0, ',', '.') }}</div>
             <div class="metric-note">Akumulasi transaksi pada bulan aktif</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Profit Bulan Ini</div>
+            <div class="metric-value">Rp {{ number_format($profitBulan, 0, ',', '.') }}</div>
+            <div class="metric-note">Akumulasi profit bulan aktif</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Kasir Aktif</div>
@@ -85,6 +95,7 @@ new Chart(document.getElementById('chartPenjualan'), {
     },
     options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: { legend: { display: false }, tooltip: {
             backgroundColor: 'oklch(1 0 0)',
             borderColor: 'oklch(0.922 0 0)',

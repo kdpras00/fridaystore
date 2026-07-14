@@ -21,6 +21,11 @@
             @error('name') <p class="form-error">{{ $message }}</p> @enderror
         </div>
         <div>
+            <label class="form-label">Username</label>
+            <input type="text" name="username" value="{{ old('username', $user->username) }}" class="form-input {{ $errors->has('username') ? 'error' : '' }}" required>
+            @error('username') <p class="form-error">{{ $message }}</p> @enderror
+        </div>
+        <div>
             <label class="form-label">Email</label>
             <input type="email" name="email" value="{{ old('email', $user->email) }}" class="form-input {{ $errors->has('email') ? 'error' : '' }}" required>
             @error('email') <p class="form-error">{{ $message }}</p> @enderror

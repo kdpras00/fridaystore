@@ -52,11 +52,19 @@
         </div>
         <div>
             <label class="form-label" for="produk-gambar">
-                Gambar
+                Gambar Utama
                 <span style="font-size:11px;color:var(--color-ink-4);font-weight:400;">(opsional, maks 2MB)</span>
             </label>
             <input id="produk-gambar" type="file" name="gambar" accept="image/*" class="form-input">
             @error('gambar') <p class="form-error">{{ $message }}</p> @enderror
+        </div>
+        <div>
+            <label class="form-label" for="produk-galeri">
+                Galeri Tambahan (Multiple)
+                <span style="font-size:11px;color:var(--color-ink-4);font-weight:400;">(opsional, bisa pilih banyak file)</span>
+            </label>
+            <input id="produk-galeri" type="file" name="galeri[]" accept="image/*" multiple class="form-input">
+            @error('galeri.*') <p class="form-error">{{ $message }}</p> @enderror
         </div>
         <div class="pos-scan-note" style="margin-top:0;">
             Kode produk di-generate otomatis dari nama kategori (contoh: Jaket → JAK001, Sepatu → SEP001).

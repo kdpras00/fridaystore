@@ -52,6 +52,11 @@ class Produk extends Model
         return $this->hasMany(TransaksiDetail::class);
     }
 
+    public function galeri()
+    {
+        return $this->hasMany(ProdukGambar::class);
+    }
+
     public function isStokRendah(): bool
     {
         return $this->stok <= $this->stok_minimum;

@@ -51,7 +51,7 @@
         </div>
         <div>
             <label class="form-label" for="produk-gambar">
-                Ganti Gambar
+                Ganti Gambar Utama
                 <span style="font-size:11px;color:var(--color-ink-4);font-weight:400;">(opsional)</span>
             </label>
             @if($produk->gambar)
@@ -60,6 +60,25 @@
             </div>
             @endif
             <input id="produk-gambar" type="file" name="gambar" accept="image/*" class="form-input">
+        </div>
+        <div>
+            <label class="form-label" for="produk-galeri">
+                Tambah Galeri (Multiple)
+                <span style="font-size:11px;color:var(--color-ink-4);font-weight:400;">(opsional, file baru akan ditambahkan)</span>
+            </label>
+            @if($produk->galeri && $produk->galeri->count() > 0)
+            <div style="margin-bottom:12px;display:flex;gap:12px;flex-wrap:wrap;">
+                @foreach($produk->galeri as $gal)
+                <div style="position:relative;">
+                    <img src="{{ asset('storage/'.$gal->path) }}" style="height:64px;width:64px;border-radius:6px;object-fit:cover;border:1px solid var(--color-border);" alt="">
+                    <label style="position:absolute;top:-6px;right:-6px;background:var(--color-danger);color:white;padding:2px 6px;border-radius:4px;font-size:10px;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.2);">
+                        <input type="checkbox" name="hapus_galeri[]" value="{{ $gal->id }}" style="display:none;" onchange="this.parentNode.previousElementSibling.style.opacity = this.checked ? '0.3' : '1'"> Hapus
+                    </label>
+                </div>
+                @endforeach
+            </div>
+            @endif
+            <input id="produk-galeri" type="file" name="galeri[]" accept="image/*" multiple class="form-input">
         </div>
         <div class="pos-scan-note" style="margin-top:0;">
             Simpan setelah cek ulang harga dan kategori. Kode produk ({{ $produk->kode_produk }}) tidak berubah.

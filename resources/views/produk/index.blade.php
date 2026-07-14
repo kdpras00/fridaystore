@@ -37,6 +37,7 @@
                 <th>Kode</th>
                 <th>Nama Produk</th>
                 <th>Kategori</th>
+                <th>Harga Beli</th>
                 <th>Harga Jual</th>
                 <th>Stok</th>
                 <th class="dt-no-export" style="text-align:right;">Aksi</th>
@@ -61,6 +62,10 @@
                 <td style="font-size:12.5px;color:var(--color-ink-3);font-family:var(--font-mono);">{{ $p->kode_produk }}</td>
                 <td style="font-weight:500;color:var(--color-ink);">{{ $p->nama }}</td>
                 <td style="font-size:13.5px;color:var(--color-ink-2);">{{ $p->kategori->nama }}</td>
+                <td style="font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--color-ink-2);"
+                    data-order="{{ $p->harga_beli }}">
+                    Rp {{ number_format($p->harga_beli, 0, ',', '.') }}
+                </td>
                 <td style="font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--color-ink);"
                     data-order="{{ $p->harga_jual }}">
                     Rp {{ number_format($p->harga_jual, 0, ',', '.') }}
@@ -94,11 +99,11 @@
         order: [[2, 'asc']],
         columnDefs: [
             { className: 'dtr-control', orderable: false, targets: -1 },
-            { orderable: false, targets: [0, 6] },
+            { orderable: false, targets: [0, 7] },
             { responsivePriority: 1, targets: 2 },
-            { responsivePriority: 2, targets: 4 },
-            { responsivePriority: 3, targets: 5 },
-            { responsivePriority: 10, targets: [0, 1, 3, 6] },
+            { responsivePriority: 2, targets: 5 },
+            { responsivePriority: 3, targets: 6 },
+            { responsivePriority: 10, targets: [0, 1, 3, 4, 7] },
         ],
         buttons: window.DT_EXPORT_BUTTONS,
     }",

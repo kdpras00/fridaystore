@@ -16,11 +16,21 @@ class DashboardController extends Controller
         $stokRendah = Produk::where('stok_minimum', '>', 0)
                         ->whereColumn('stok', '<=', 'stok_minimum')
                         ->count();
-        $transaksiHari  = Transaksi::whereDate('created_at', today())->count();
-        $omzetHari      = Transaksi::whereDate('created_at', today())->sum('total_bayar');
-        $omzetBulan     = Transaksi::whereMonth('created_at', now()->month)
+        $transaksiHariData = Transaksi::with('detail')->whereDate('created_at', today())->get();
+        $transaksiHari     = $transaksiHariData->count();
+        $omzetHari         = $transaksiHariData->sum('total_bayar');
+        $profitHari        = $transaksiHariData->sum(function($t) {
+            return $t->total_bayar - $t->detail->sum('ppn') - $t->detail->sum(function($d) { return $d->harga_beli * $d->qty; });
+        });
+
+        $transaksiBulanData = Transaksi::with('detail')
+                            ->whereMonth('created_at', now()->month)
                             ->whereYear('created_at', now()->year)
-                            ->sum('total_bayar');
+                            ->get();
+        $omzetBulan         = $transaksiBulanData->sum('total_bayar');
+        $profitBulan        = $transaksiBulanData->sum(function($t) {
+            return $t->total_bayar - $t->detail->sum('ppn') - $t->detail->sum(function($d) { return $d->harga_beli * $d->qty; });
+        });
 
         // Chart: penjualan 7 hari terakhir — single query instead of 7
         $last7 = Transaksi::selectRaw('DATE(created_at) as date, SUM(total_bayar) as total')
@@ -38,7 +48,8 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'totalProduk', 'totalKasir', 'stokRendah',
-            'transaksiHari', 'omzetHari', 'omzetBulan', 'chartData'
+            'transaksiHari', 'omzetHari', 'omzetBulan',
+            'profitHari', 'profitBulan', 'chartData'
         ));
     }
 }

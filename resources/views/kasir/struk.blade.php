@@ -100,13 +100,14 @@
         <div class="struk-wrapper" id="struk">
             {{-- Header --}}
             <div class="center" style="margin-bottom:0.75rem;">
-                <div style="margin-bottom:0.45rem;">
-                    <span class="brand-mark">{{ config('store.brand_text') }}</span>
-                </div>
                 <div class="store-name">{{ config('store.name') }}</div>
+                @if(config('store.tagline'))
                 <div class="store-meta">{{ config('store.tagline') }}</div>
+                @endif
                 <div class="store-meta">{{ config('store.address') }}</div>
+                @if(config('store.phone'))
                 <div class="store-meta">Telp: {{ config('store.phone') }}</div>
+                @endif
             </div>
 
             <hr class="divider">
@@ -135,6 +136,10 @@
             <div class="row"><span>Subtotal</span><span class="mono">Rp {{ number_format($transaksi->total_harga, 0, ',', '.') }}</span></div>
             @if($transaksi->diskon > 0)
             <div class="row"><span>Diskon</span><span class="mono">- Rp {{ number_format($transaksi->diskon, 0, ',', '.') }}</span></div>
+            @endif
+            @php($totalPpn = $transaksi->detail->sum('ppn'))
+            @if($totalPpn > 0)
+            <div class="row"><span>PPN 11%</span><span class="mono">+ Rp {{ number_format($totalPpn, 0, ',', '.') }}</span></div>
             @endif
             <div class="row bold" style="margin-top:0.25rem;">
                 <span>TOTAL</span>
