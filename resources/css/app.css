@@ -791,6 +791,31 @@ body {
     padding-right: 36px;
 }
 
+input[type="file"].form-input {
+    padding: 0; /* Remove default padding so the button spans full height */
+    cursor: pointer;
+    overflow: hidden;
+}
+
+input[type="file"].form-input::file-selector-button {
+    background: var(--color-surface-2);
+    border: none;
+    border-right: 1px solid var(--color-border);
+    padding: 8px 14px;
+    margin-right: 14px;
+    color: var(--color-ink-2);
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: background 120ms ease, color 120ms ease;
+    line-height: 1.5;
+}
+
+input[type="file"].form-input::file-selector-button:hover {
+    background: var(--color-surface-3);
+    color: var(--color-ink);
+}
+
 .form-input::placeholder {
     color: var(--color-ink-4);
 }
